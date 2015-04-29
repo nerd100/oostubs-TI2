@@ -21,7 +21,7 @@
 class CGA_Screen {
   private:
   unsigned char attribute;
-  unsigned char* screen;
+  unsigned char* bla;
   protected:
     int fgColor;
     int bgColor;
@@ -147,8 +147,8 @@ class CGA_Screen {
      */
     void setAttributes(int fgColor, int bgColor, bool blink);
     void setFG(int v);
-        void setBG(int v);
-        void setBL(bool v);
+    void setBG(int v);
+    void setBL(bool v);
 };
 
 #endif
