@@ -65,7 +65,7 @@ O_Stream& O_Stream::operator << (unsigned int value) {
 void O_Stream::help(unsigned long v){
 
   if (v < base) {
-        if (v < 10) {
+        if (v < dec) {
             put( (char) ('0' + v) );
         } else {
             put( (char) ('7' + v) );
@@ -80,34 +80,34 @@ void O_Stream::help(unsigned long v){
 /** \brief \todo implement **/
 O_Stream& O_Stream::operator << (long value) {
   if(base > 10){
-      put('0');
-      put('x');
-    }else if(value < 0){ // Vorzeichen nicht fuer hex moeglich
-      put('-');
-      value *= -1;
-    }
-
-    if (base > 10) {
-      int length = 0;
-      const int numOfDigits = 8;
-
-      int t = value;
-      while (t != 0) {
-        t /= 16;
-        length++;
+        put('0');
+        put('x');
+      }else if(value < 0){
+        put('-');
+        value *= -1;
       }
 
-      if (value == 0) length++;
+      if (base > 10) {
+        int length = 0;
+        const int numOfDigits = 8;
 
-      if (length < numOfDigits) {
-        for (int i = 0; i < numOfDigits - length; i++)
-          put('0');
+        int t = value;
+        while (t != 0) {
+          t /= 16;
+          length++;
+        }
+
+        if (value == 0) length++;
+
+        if (length < numOfDigits) {
+          for (int i = 0; i < numOfDigits - length; i++)
+            put('0');
+        }
       }
-    }
 
-    help((unsigned long) value);
+      help((unsigned long) value);
 
-    return *this;
+      return *this;
 }
 
 /** \brief \todo implement **/
