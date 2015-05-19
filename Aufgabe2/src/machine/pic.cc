@@ -50,39 +50,38 @@ PIC::~PIC(){
 }
 
 void PIC::allow(Interrupts interrupt){
-   IO_Port mask_1(0x21), mask_2(0xa1);
-  IO_Port& mask = mask_1;
-  unsigned char help;
+  IO_Port mask_1(0x21), mask_2(0xa1);
+  unsigned char ocw1;
   unsigned short i = interrupt-32;
   if(i<8) {
+	  ocw1 = mask_1.inb();
+	  ocw1 &= ~(1<<i);
+	  mask_1.outb(ocw1);
     //master
-    mask = mask_1;
   } else {
+	  ocw1 = mask_2.inb();
+	  ocw1 &= ~(1<<(i-8));
+	  mask_2.outb(ocw1);
     //slave
-    mask = mask_2;
-    i-=8;
   }
-  help = mask.inb();
-  help = (help & (~(1 << 1)));
-  mask.outb(help);
 }
+
 
 void PIC::forbid(Interrupts interrupt){
   IO_Port mask_1(0x21), mask_2(0xa1);
-  IO_Port& mask = mask_1;
-  unsigned char help;
+  unsigned char ocw1;
   unsigned short i = interrupt-32;
   if(i<8) {
+	  ocw1 = mask_1.inb();
+	  ocw1 |= ~(1<<i);
+	  mask_1.outb(ocw1);
     //master
-    mask = mask_1;
   } else {
+	  ocw1 = mask_2.inb();
+	  ocw1 |= ~(1<<(i-8));
+	  mask_2.outb(ocw1);
     //slave
-    mask = mask_2;
-    i-=8;
   }
-  help = mask.inb();
-  help = (help | (1 << i));
-  mask.outb(help);
 }
 
 void PIC::ack(Interrupts interrupt){

@@ -19,7 +19,7 @@
 int current = -1;
 
 void Panic::trigger(){
-	kout << current;
+	//kout << current;
 	// kout << "PANIC";
 	kout.flush();
     // cpu.halt();
