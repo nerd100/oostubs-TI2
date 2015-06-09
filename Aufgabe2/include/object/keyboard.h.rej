@@ -1,0 +1,18 @@
+--- include/object/keyboard.h 2015-06-08 12:03:24.072788168 +0200
++++ aufg4/include/object/keyboard.h  2015-06-08 12:03:12.701726488 +0200
+@@ -2,8 +2,14 @@
+  *                                   Technische Informatik II                                    * 
+  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+  *                                                                                               * 
+- *                                        object/keyboard                                        * 
++ *                                 K E Y B O A R D - O B J E C T                                 * 
+  *                                                                                               * 
+ \* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
++
++#ifndef __keyboard_object_header__
++#define __keyboard_object_header__
++
+ #include "device/keyboard.h"
+ extern Keyboard keyboard;
++
++#endif

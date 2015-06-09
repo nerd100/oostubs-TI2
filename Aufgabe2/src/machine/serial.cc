@@ -1,4 +1,6 @@
 #include "machine/serial.h"
+#include "locking/scopedLock.h"
+#include "object/lock.h"
 
 Serial::Serial(): transmitPort(address+0),
                   divisorLowPort(address+0),
@@ -56,6 +58,7 @@ Serial::ControlByte Serial::control(){
 }
 
 unsigned int Serial::baudRate(){
+  ScopedLock sLock(lock);
   union{
     unsigned char buffer[2];
     unsigned short divisor;
@@ -71,6 +74,7 @@ unsigned int Serial::baudRate(){
 }
 
 unsigned int Serial::baudRate(unsigned int baudRate){
+  ScopedLock sLock(lock);
   union{
     unsigned char buffer[2];
     unsigned short divisor;

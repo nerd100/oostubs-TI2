@@ -44,5 +44,6 @@ void Task2::action(){
       kout << "-";
     }
     kout << endl;
+
   }
 }

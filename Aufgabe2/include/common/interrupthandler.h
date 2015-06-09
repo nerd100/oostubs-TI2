@@ -13,7 +13,9 @@
  * \~german
  * \brief Basisklasse für die Interruptbehandlung
  * 
- * Mit Hilfe dieser abstrakten Basisklasse können sich Geräte beim I_Man für die Behandlung von spezifischen Interrupts registrieren. Jede Unterklasse muss die Funktion \ref trigger() mit den jeweiligen, gewünschten 
+ * Mit Hilfe dieser abstrakten Basisklasse können sich Geräte beim I_Man
+ * für die Behandlung von spezifischen Interrupts registrieren.
+ * Jede Unterklasse muss die Funktion \ref trigger() mit den jeweiligen, gewünschten
  * Verhalten implementieren.
  * 
  * \~english

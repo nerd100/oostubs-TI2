@@ -1,0 +1,11 @@
+--- src/boot/boot.S 2015-06-08 12:03:24.075788184 +0200
++++ aufg4/src/boot/boot.S  2015-06-08 12:03:12.704726504 +0200
+@@ -111,8 +111,6 @@
+ 
+ setupObj:                /* Call the constructors of global objects */
+  call constructObjects
+- /*ljmpl $0x04, $callKernel*/ /* only test code: generate GP */
+- /*int $2*/            /* only test code: generate pseudo Interrupt 2, just normal interrupt, no exception generation */
+ 
+ callKernel:              /* Call the C/C++ main function of the operating system */
+  call kernel

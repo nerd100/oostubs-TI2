@@ -1,0 +1,39 @@
+--- doc/task3.dox 2015-06-08 12:03:24.069788152 +0200
++++ aufg4/doc/task3.dox  2015-06-08 12:03:12.697726466 +0200
+@@ -12,12 +12,9 @@
+  * in dieser Aufgabe um Fehlermeldungen der x86-CPU und dem Stackaufbau bei Funktionsaufrufen.
+  * 
+  * Zu diesem Zweck sind in zwei Teilfunktionen die Stacks zu untersuchen und deren
+- * Struktur zu interpretieren. 
+- * 
+- * Zusätzlich ist ein potentieller Schadcode zu finden und sein Einfallstor zu überprüfen. 
+- * 
+- * In dieser Aufgabe ist keine eigene Implementierung notwendig!
++ * Struktur zu interpretieren. In dieser Aufgabe ist keine eigene Implementierung notwendig! 
+  *
++ * 
+  * \section task3_sec3 Implementierung und Fragen
+  * Die Vorgabe bringt zwei neue Task-Anwendungen, \ref Task3A und \ref Task3B.
+  * Beim Start des OS kann zwischen beiden Aufgaben gewählt werden, wobei deren 
+@@ -65,20 +62,7 @@
+  * Wie erscheint das Array \"ende\" im Speicher? \n
+  * In welcher Reihenfolge werden Parameter bei einem Funktionsaufruf auf den Stack gelegt? \n
+  * 
+- * \subsection task3_sec3_3 Teil C
+- * Wir haben ein Sicherheitsleck in OOStuBs, wodurch es Angreifern gelungen ist,
+- * potentiell schädlichen Code in das System einzuschleusen. Führen Sie eine Analyse
+- * des Schadcodes durch und vollziehen sie nach, wie der Angreifer seinen Code ausführen konnte.
+- * \n
+- * \b Hinweis: \n
+- * Nutzen Sie zur Analyse den gdb, in Eclipse werden Sie den Schadcode nicht lesen können.\n
+- * \n
+- * \b Fragen: \n
+- * Welchen Schadcode führt der Angreifer aus? \n
+- * Wie versteckt sich der Angreifer vor Analysen? \n
+- * Wie konnte er seinen Code ausführen? \n
+- * Wie hätte man dies verhindern können? \n
+- *
++ * 
+  * \section task3_sec4 Hilfestellung
+  *   \li \subpage task3_procstack
+  *   \li \subpage task3_exception

@@ -1,0 +1,25 @@
+--- src/machine/serial.cc 2015-06-08 12:03:24.077788195 +0200
++++ aufg4/src/machine/serial.cc  2015-06-08 12:03:12.706726515 +0200
+@@ -1,4 +1,6 @@
+ #include "machine/serial.h"
++#include "locking/scopedLock.h"
++#include "object/lock.h"
+ 
+ Serial::Serial(): transmitPort(address+0),
+                   divisorLowPort(address+0),
+@@ -56,6 +58,7 @@
+ }
+ 
+ unsigned int Serial::baudRate(){
++  ScopedLock sLock(lock);
+   union{
+     unsigned char buffer[2];
+     unsigned short divisor;
+@@ -71,6 +74,7 @@
+ }
+ 
+ unsigned int Serial::baudRate(unsigned int baudRate){
++  ScopedLock sLock(lock);
+   union{
+     unsigned char buffer[2];
+     unsigned short divisor;

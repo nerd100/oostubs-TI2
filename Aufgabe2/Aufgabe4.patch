@@ -1,0 +1,3440 @@
+diff -rupN -x .git ./doc/mainpage.dox ../aufg4/doc/mainpage.dox
+--- ./doc/mainpage.dox  2015-06-08 12:03:23.950787504 +0200
++++ ../aufg4/doc/mainpage.dox 2015-06-08 12:03:12.577725815 +0200
+@@ -12,6 +12,7 @@
+  * \ref task1 \n
+  * \ref task2 \n
+  * \ref task3 \n
++ * \ref task4 \n
+  * 
+  * \section main_sec3 Entwicklungsumgebung
+  * Auf der folgenden Seite ist die Entwicklungsumgebung beschrieben. \n
+@@ -34,6 +35,7 @@
+  * \ref task1 \n
+  * \ref task2 \n
+  * \ref task3 \n
++ * \ref task4 \n
+  * 
+  * \section main_sec3 Development Environment
+  * The following side describe the environment. \n
+diff -rupN -x .git ./doc/task3.dox ../aufg4/doc/task3.dox
+--- ./doc/task3.dox 2015-06-08 12:03:24.069788152 +0200
++++ ../aufg4/doc/task3.dox  2015-06-08 12:03:12.697726466 +0200
+@@ -12,12 +12,9 @@
+  * in dieser Aufgabe um Fehlermeldungen der x86-CPU und dem Stackaufbau bei Funktionsaufrufen.
+  * 
+  * Zu diesem Zweck sind in zwei Teilfunktionen die Stacks zu untersuchen und deren
+- * Struktur zu interpretieren. 
+- * 
+- * Zusätzlich ist ein potentieller Schadcode zu finden und sein Einfallstor zu überprüfen. 
+- * 
+- * In dieser Aufgabe ist keine eigene Implementierung notwendig!
++ * Struktur zu interpretieren. In dieser Aufgabe ist keine eigene Implementierung notwendig! 
+  *
++ * 
+  * \section task3_sec3 Implementierung und Fragen
+  * Die Vorgabe bringt zwei neue Task-Anwendungen, \ref Task3A und \ref Task3B.
+  * Beim Start des OS kann zwischen beiden Aufgaben gewählt werden, wobei deren 
+@@ -65,20 +62,7 @@
+  * Wie erscheint das Array \"ende\" im Speicher? \n
+  * In welcher Reihenfolge werden Parameter bei einem Funktionsaufruf auf den Stack gelegt? \n
+  * 
+- * \subsection task3_sec3_3 Teil C
+- * Wir haben ein Sicherheitsleck in OOStuBs, wodurch es Angreifern gelungen ist,
+- * potentiell schädlichen Code in das System einzuschleusen. Führen Sie eine Analyse
+- * des Schadcodes durch und vollziehen sie nach, wie der Angreifer seinen Code ausführen konnte.
+- * \n
+- * \b Hinweis: \n
+- * Nutzen Sie zur Analyse den gdb, in Eclipse werden Sie den Schadcode nicht lesen können.\n
+- * \n
+- * \b Fragen: \n
+- * Welchen Schadcode führt der Angreifer aus? \n
+- * Wie versteckt sich der Angreifer vor Analysen? \n
+- * Wie konnte er seinen Code ausführen? \n
+- * Wie hätte man dies verhindern können? \n
+- *
++ * 
+  * \section task3_sec4 Hilfestellung
+  *   \li \subpage task3_procstack
+  *   \li \subpage task3_exception
+diff -rupN -x .git ./doc/task4.dox ../aufg4/doc/task4.dox
+--- ./doc/task4.dox 1970-01-01 01:00:00.000000000 +0100
++++ ../aufg4/doc/task4.dox  2015-06-08 12:03:12.697726466 +0200
+@@ -0,0 +1,202 @@
++/**
++ * \page task4 Aufgabe 4 - Threads
++ * \tableofcontents
++ * 
++ 
++ * Das Ziel dieser Aufgabe ist die Vermittlung einer der wichtigsten Abstraktionen moderner Betriebssysteme: Threads
++ * und deren Scheduling. Hierfür wird das bestehende System um folgende Klassen erweitert.
++ 
++  \dot
++  digraph task1 {
++    size="5.9,5.5";
++    node [shape=box, style="solid,filled", fillcolor=white];
++    
++    
++    kernel [label="kernel(...)", shape=oval, URL="\ref kernel"];
++    
++    subgraph cluster_subuser {
++      rank="source";
++      style=filled;
++      color=lightgray;
++      label = "user";
++      labeljust=l;
++      task4 [label="Task4", URL="\ref Task4"];
++      rotcursor [label="RotCursor", URL="\ref Task4::RotCursor"];
++      counter [label="Counter", URL="\ref Task4::Counter"];
++      appl [label="Application", URL="\ref Application"];
++    }
++    
++    subgraph cluster_submachine {
++      style=filled;
++      color=lightgray;
++      label = "machine";
++      labeljust=r;
++      pit       [label="PIT", URL="\ref PIT", color=blue];
++      context   [label="Context", URL="\ref Context"];
++    }
++
++    subgraph cluster_subcommon {
++      style=filled;
++      color=lightgray;
++      label = "common";
++      labeljust=c;
++      queue [label="Queue", URL="\ref Queue"];
++      elem  [label="Queue::Element", URL="\ref Queue::Element"];
++    }
++    
++    subgraph cluster_subdevice {
++      style=filled;
++      color=lightgray;
++      label = "device";
++      labeljust=c;
++      watch [label="Watch", URL="\ref Watch", color=blue];
++      log   [label="Log", URL="\ref Log"]
++    }
++
++    subgraph cluster_subthread {
++      style=filled;
++      color=lightgray;
++      label = "thread";
++      labeljust=c;
++      thread [label="Thread", URL="\ref Thread", color=blue];
++      dispatcher [label="Dispatcher", URL="\ref Dispatcher", color=blue];
++      schedulerC [label="Scheduler", URL="\ref Scheduler", color=blue];
++    }
++
++    subgraph cluster_sublocking {
++      style=filled;
++      color=lightgray;
++      label = "locking";
++      labeljust=c;
++      interruptlock [label="InterruptLock", URL="\ref InterruptLock"];
++      scopedlock [label="ScopedLock", URL="\ref ScopedLock"];
++    }
++
++    subgraph cluster_subobject{
++      style=filled;
++      color=lightgray;
++      label = "object";
++      labeljust=c;
++      lock [label="lock", URL="\ref lock"];
++      schedulerO [label="scheduler", URL="\ref scheduler"];
++    }
++    
++    watch -> pit [arrowhead="empty"];
++    lock -> interruptlock [dir="none"];
++    scopedlock -> lock [arrowhead="open"];
++    schedulerC -> dispatcher [arrowhead="empty"];
++    schedulerC -> queue [dir="none"];
++    schedulerC -> thread [dir="none"];
++    schedulerO -> schedulerC [arrowhead="open"];
++    thread -> context [dir="none"];
++    kernel -> schedulerO [arrowhead="open"];
++    watch -> schedulerO [arrowhead="open"];
++    schedulerC -> scopedlock [dir="none"];
++    thread -> lock [arrowhead="open"];
++    thread -> elem [arrowhead="empty"];
++    queue -> elem [dir="none"];
++    task4 -> appl [arrowhead="empty"];
++    appl -> thread [arrowhead="empty"];
++    rotcursor -> appl [arrowhead="empty"];
++    counter -> appl [arrowhead="empty"];
++    task4 -> rotcursor [dir="none"];
++    task4 -> counter [dir="none"];
++    }
++    \enddot
++
++ * Die Einbindung der Klassen sowie deren Implementierung kann in 2 Unteraufgaben unterteilt werden:
++ 
++ 
++ * \section task4_a Aufgabe A - Kooperatives Scheduling
++ *
++ 
++ * Diese Aufgabe befasst sich mit kooperativen Scheduling. Daher muss jeder
++ * Thread individuell die Aktivität an andere Threads übergeben, es findet kein
++ * preemptives Scheduling statt.
++ 
++ 
++ * Die Klasse \ref Task4 initialisiert in \ref Task4::action zum Testen der
++ * entsprechenden Funktionen drei Applikationen \ref Task4::counter1, \ref
++ * Task4::counter2 und \ref Task4::rotCursor. Diese Unterapplikationen werden in \ref
++ * Task4::action dem Scheduler als bereite Threads übergeben (Funktion \ref
++ * Scheduler::insert). Das Applikationen-Interface \ref Application wurde so erweitert, dass es von \ref Thread erbt.
++ * Daher sind von nun an alle Applikationen auch Threads. Bei der Erstellung einer Applikation wird diese sofort im
++ * Scheduler als bereiter Thread eingetragen. Daher können alle vorhergehenden Funktionen nun auch durch den Scheduler
++ * aufgerufen werden. 
++
++ * Der Scheduler legt die Anwendungen in seiner Ready-Queue ab, die dann
++ * sequentiell durchlaufen wird. Wir verwenden dafür eine spezielle \ref Queue, die ohne Speicherverwaltung auskommt.
++
++ * Das Umschalten zwischen den verschiedenen Threads geschiet durch die
++ * Scheduler Funktion \ref Scheduler::yield oder \ref Scheduler::exit. Diese
++ * sind zur leichter Benutzbarkeit bereits in Thread als \ref Thread::yield bzw. \ref Thread::exit vorgesehen.
++ * Da alle Applikationen von Thread erben, sind diese Funktionen damit im Context aller Applikationen verfügbar.
++ 
++ * Der eigentliche Kontextwechsel wird dann durch den \ref Dispatcher
++ * vorgenommen. Dieser soll hierfür die gespeicherten \ref Context der Threads umschalten. Hierfür bietet der \ref
++ * Context zwei Funktionen \ref Context::set um den ersten Thread des Systems zu starten und \ref Context::swap um
++ * zwischen 2 Threads zu wechseln.
++ 
++ * Das Starten des ersten Threads des Systems, Task4, geschieht durch anlegen desselben und anschließenden Aufruf von
++ * \ref Scheduler::start. Diese Funktion wird am Ende von \ref kernel aufgerufen und kehrt nie zurück!
++ 
++ * \subsection task4_a_steps Vorgeschlagenes Vorgehen zum Lösen von Teil A
++ *   \li Implementieren Sie die Methode \ref Scheduler::start und \ref Scheduler::insert mit den
++ *   Abhängigkeiten des Dispatchers. Ebenso müssen Sie die statische Methode \ref Thread::kickoff implementieren um die
++ *   Ausführung von Thread::action einzuleiten.
++ *
++ *   \li Verifizieren Sie den initialen Kontextwechsel Task4::action, indem Sie verhindern, dass Task4 endet. Hierzu
++ *   sollten Sie eine Endlossschleife am Ende von \ref Task4::action einfügen
++ *
++ *   \li Implementieren Sie \ref Scheduler::yield, die den neuen Task lädt und
++ *   den alten in der Queue abspeichert. Zudem muss der Dispatcher aufgerufen
++ *   werden \ref Dispatcher::dispatch. Erweitern Sie ihre Endlosschleife am Ende von \ref Task4::action durch eine
++ *   Aufruf von \ref Thread::yield
++ *
++ *   \li Füllen Sie die Methode \ref Scheduler::exit (Beenden und Löschen des
++ *   aktuellen Threads) und \ref Scheduler::kill (Löschen eines
++ *   nicht-aktiven Threads) mit Ihrem Code. 
++ *
++ *   \li Entfernen Sie die Endlosschleife am Ende von \ref Task4::action und testen Sie die Aufgabe.
++
++ * \section task4_b Aufgabe B - Preemptives Scheduling
++ *
++ * Preemtives Scheduling erweitert das kooperative Scheduling um einen
++ * periodischen asynchronen Aufruf von \ref Scheduler::preempt.
++ 
++ * Hierdurch wird einerseits ein interaktiverer Betrieb ermöglicht,
++ * andererseits muss aber der Umschaltvorgang an sich geschützt werden um die
++ * Konsistenz der beteiligten Datenstrukturen sicherzustellen.  In unserem
++ * Beispiel muss lediglich der Zugriff auf die Warteschlange als kritischer
++ * Abschnitt geschützt werden. Dazu wird ein globaler Lock \ref lock bereitgestellt.
++ 
++ * \note \ref InterruptLock darf nicht geschachtelt benutzt werden. D.h. \ref InterruptLock::lock und \ref InterruptLock::unlock dürfen nicht doppelt hinter einander aufgerufen werden, da der Lock sonst einen unbestimmten Zustand gerät. Zum Vermeiden dieses Umstandes, werden Warnungen ausgegeben, sobald dies auftreten sollte. Durch einen Breakpoint an der Stelle der Warnungen kann man in solch einem Fall herausfinden, wodurch dies aufgetreten ist. 
++
++ * Dieses Objekt der Klasse \ref InterruptLock sperrt und entsperrt die globalen Interrupts.
++ * Einerseits können die Funktionen des Locks \ref InterruptLock::lock und \ref InterruptLock::unlock direkt aufgerufen werden,
++ * was jedoch fehleranfällig ist, oder sie können über einen \ref ScopedLock and die Existenz eines Objektes gebunden werden.
++ * \ref ScopedLock kann auch verschachtelt genutzt werden. Wird ein ScopedLock zu einem Zeitpunkt erstellt, zu dem der globale
++ * Lock bereits gelockt war, hat der neue ScopedLock keine Auswirkungen. Die Aufhebung des Locks liegt in der Verantwortung desjenigen
++ * der den Lock erstmalig gelockt hat.
++ * \code 
++{
++  ScopedLock scopedLock(lock);
++  ...
++}\endcode
++
++ * Dieses Code Fragment erzeugt eine kritischen Abschnitt innerhalb des durch
++ * geschweifte Klammern markierten Bereichs.
++
++ * Um ein periodisches Umschalten der Tasks zu erreichen, ohne das diese von sich aus Thread::yield aufrufen, wird der
++ * Hardware-Timer der x86-Architektur verwendet. Dieser Programmable Interval Timer (\ref PIT) erzeugt konfigurierbar die
++ * periodisch Interrupts.
++ 
++ * Die Klasse \ref Watch behandelt diese Interrupts indem sie die Scheduler Methode \ref Scheduler::preempt aufruft.
++
++ * \subsection task4_b_steps Vorgeschlagenes Vorgehen zur Lösung von Teil B
++ *   \li Implementieren Sie die Methoden der Klasse Watch.
++ *   \li Evaluieren Sie die Richtigkeit durch periodische Textausgaben.
++ *   \li Implementieren Sie den Aufruf von Scheduler::preempt in der Watch::trigger und sichern Sie die Zugriffe auf die Queue.
++ *
++ **/
++
+diff -rupN -x .git ./include/common/null.h ../aufg4/include/common/null.h
+--- ./include/common/null.h 1970-01-01 01:00:00.000000000 +0100
++++ ../aufg4/include/common/null.h  2015-06-08 12:03:12.697726466 +0200
+@@ -0,0 +1,9 @@
++/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\
++ *                                   Technische Informatik II                                    * 
++ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
++ *                                                                                               * 
++ *                                           N U L L                                             * 
++ *                                                                                               * 
++\* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
++
++#define NULL 0
+diff -rupN -x .git ./include/common/queue.h ../aufg4/include/common/queue.h
+--- ./include/common/queue.h  1970-01-01 01:00:00.000000000 +0100
++++ ../aufg4/include/common/queue.h 2015-06-08 12:03:12.698726471 +0200
+@@ -0,0 +1,36 @@
++/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\
++ *                                   Technische Informatik II                                    * 
++ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
++ *                                                                                               * 
++ *                                           Q U E U E                                           * 
++ *                                                                                               * 
++\* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
++
++#ifndef __queue_include__
++#define __queue_include__
++
++class Queue{
++  public:
++
++    class Element{
++      private:
++        Element* next;
++      public:
++        Element();
++      friend class Queue;
++    };
++
++  private:
++    Element* mHead;
++    Element* mTail;
++
++  public:
++    Queue();
++    void push_back(Element& e);
++    Element* pop_front();
++    Element* peek_front() const;
++    bool remove(Element& e);
++    bool empty() const;
++};
++
++#endif
+diff -rupN -x .git ./include/device/keyboard.h ../aufg4/include/device/keyboard.h
+--- ./include/device/keyboard.h 2015-06-08 12:03:24.071788162 +0200
++++ ../aufg4/include/device/keyboard.h  2015-06-08 12:03:12.698726471 +0200
+@@ -31,6 +31,8 @@
+  * for the keyboard.
+  */
+ class Keyboard : public Keyboard_Controller, public InterruptHandler  {
++  protected:
++    Key last_key;
+   public:    
+     /** 
+      * \~german
+@@ -65,6 +67,23 @@ class Keyboard : public Keyboard_Control
+      *
+      */
+     virtual void trigger ();
++
++    /**
++     * \~german
++     * \brief gibt den zuletzt betätigten Key zurück.
++     *
++     * Tritt ein Interrupt für die Tastatur auf, wird der Tastendruck abgespeichert.
++     * Mit dieser Funktion kann er abgefragt werden.
++     *
++     * @return Letzter betätigter Key
++     *
++     * \~english
++     * \brief returns last key
++     *
++     * @return last Key
++     *
++     */
++    Key& get_key();
+ };
+ 
+ #endif
+diff -rupN -x .git ./include/device/watch.h ../aufg4/include/device/watch.h
+--- ./include/device/watch.h  1970-01-01 01:00:00.000000000 +0100
++++ ../aufg4/include/device/watch.h 2015-06-08 12:03:12.699726477 +0200
+@@ -0,0 +1,54 @@
++/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\
++ *                                   Technische Informatik II                                    * 
++ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
++ *                                                                                               * 
++ *                                          W A T C H                                            * 
++ *                                                                                               * 
++\* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
++
++#ifndef __watch_include__
++#define __watch_include__
++
++/* * * * * * * * * * * * * * * * * * * * * * * * *\
++#                    INCLUDES                     #
++\* * * * * * * * * * * * * * * * * * * * * * * * */
++#include "common/interrupthandler.h"
++#include "machine/pit.h"
++
++
++/* * * * * * * * * * * * * * * * * * * * * * * * *\
++#                    CLASSES                      #
++\* * * * * * * * * * * * * * * * * * * * * * * * */
++/**
++ * \~english
++ * \brief Handler for periodic timer interrupts
++ * 
++ * This class is a subclass of Gate and implements the interrupt routine used 
++ * for the clock.
++ */
++class Watch : public PIT, public InterruptHandler {
++public:
++  /**
++   * \~english
++   * \brief Enable the clock interrupt and its handling
++   *
++   * \param us interval between interrupts caused by the time-interrupt in 
++   *           microsecounds
++   *
++   * Method windup() is used to enable the clock interrupt. After calling 
++   * windup() the clock interrupt is triggered in the defined interval.
++   */
++  void windup(unsigned int us);
++
++  /**
++   * \~english
++   * \brief Handling method of the clock interrupt
++   *
++   * Handles incoming clock interrupts. Issues a preemtion of the currently
++   * running thread and schedules the next one.
++   *
++   **/
++  virtual void trigger();
++};
++
++#endif
+diff -rupN -x .git ./include/locking/interruptLock.h ../aufg4/include/locking/interruptLock.h
+--- ./include/locking/interruptLock.h 1970-01-01 01:00:00.000000000 +0100
++++ ../aufg4/include/locking/interruptLock.h  2015-06-08 12:03:12.699726477 +0200
+@@ -0,0 +1,72 @@
++/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\
++ *                                   Technische Informatik II                                    * 
++ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
++ *                                                                                               * 
++ *                                   I N T E R R U P T - L O C K                                 * 
++ *                                                                                               * 
++\* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
++
++#ifndef __interrupt_lock_header__
++#define __interrupt_lock_header__
++
++/* * * * * * * * * * * * * * * * * * * * * * * * *\
++#                    INCLUDES                     #
++\* * * * * * * * * * * * * * * * * * * * * * * * */
++#include "locking/lock.h"
++
++extern "C" void exception(unsigned short, void**);
++
++/* * * * * * * * * * * * * * * * * * * * * * * * *\
++#                    CLASSES                      #
++\* * * * * * * * * * * * * * * * * * * * * * * * */
++
++/**
++ * \~english
++ * \brief Global interrupt lock
++ *
++ * This class represent a global interrupt lock to synchronize critical sections. It disables all interrupts on creation until it is destroyed or the asymmetricUnlock function is called. The asymmetricUnlock function is a bypass for specific situations in which a created lock will never be destroyed because the scope it was defined in never ends. Therefore this method may only be called by the kickoff function of Thread.
++ **/
++class InterruptLock : public Lock
++{
++    private:
++        /**
++         * \~english
++         * \brief Interrupt state on entry
++         *
++         * The original state on lock entry needs to be saved to restore it on
++         * destruction of the lock.
++         *
++         **/
++        bool interruptState;
++
++        /** \brief enter an interrupt context **/
++        void enter();
++
++        /** \brief leave an interrupt context **/
++        void leave();
++            
++    public:
++        /** \brief Unlock and destroy **/
++        ~InterruptLock();
++
++        /**
++         * \~english
++         * \brief Locks the execution of interrupts
++         *
++         * This method disables the handling of interrupts. The current interrupt activation state is saved and restored
++         * on unlock.
++         **/
++        virtual void lock();
++
++        /**
++         * \~english
++         * \brief %Unlock interrupt handling globally
++         *
++         * This method restores the previous interrupt handling state before this Lock was locked.
++         **/
++        virtual void unlock();
++
++        friend void exception(unsigned short,void**);
++};
++
++#endif
+diff -rupN -x .git ./include/locking/lock.h ../aufg4/include/locking/lock.h
+--- ./include/locking/lock.h  1970-01-01 01:00:00.000000000 +0100
++++ ../aufg4/include/locking/lock.h 2015-06-08 12:03:12.699726477 +0200
+@@ -0,0 +1,26 @@
++/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\
++ *                                   Technische Informatik II                                    * 
++ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
++ *                                                                                               * 
++ *                                          L O C K                                              * 
++ *                                                                                               * 
++\* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
++
++#ifndef __lock_header__
++#define __lock_header__
++
++/* * * * * * * * * * * * * * * * * * * * * * * * *\
++#                    CLASSES                      #
++\* * * * * * * * * * * * * * * * * * * * * * * * */
++
++class Lock{
++  protected:
++    bool state;
++  public:
++    Lock() : state(false){}
++    virtual void lock() = 0;
++    virtual void unlock() = 0;
++    bool locked(){return state;};
++};
++
++#endif
+diff -rupN -x .git ./include/locking/scopedLock.h ../aufg4/include/locking/scopedLock.h
+--- ./include/locking/scopedLock.h  1970-01-01 01:00:00.000000000 +0100
++++ ../aufg4/include/locking/scopedLock.h 2015-06-08 12:03:12.699726477 +0200
+@@ -0,0 +1,47 @@
++/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\
++ *                                 Technische Informatik II                                      *
++ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
++ *                                                                                               *
++ *                                 S C O P E D - L O C K                                         *
++ *                                                                                               *
++\* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
++
++#ifndef __scoped_lock_include__
++#define __scoped_lock_include__
++
++#include "locking/lock.h"
++
++/** \~german
++ *
++ * \~english
++ * \brief Scoped lock
++ *
++ * This lock interface locks the supplied lock on creation and unlocks it, when the interface is destroyed.
++ */
++class ScopedLock {
++  private:
++    Lock& lock;
++    bool nested;
++  public: 
++    /** \~german
++     *  \~english
++     *  \brief Constructor locking the supplied lock
++     **/
++    ScopedLock(Lock& lock) : lock(lock), nested(lock.locked()){
++      if(!nested) {
++        lock.lock();
++      }
++    }
++    
++    /** \~german
++     *  \~english
++     *  \brief Desctructor unlocking the registered lock
++     **/
++    ~ScopedLock(){
++      if(!nested) {
++        lock.unlock();
++      }
++    }
++};
++
++#endif
+diff -rupN -x .git ./include/machine/context.h ../aufg4/include/machine/context.h
+--- ./include/machine/context.h 1970-01-01 01:00:00.000000000 +0100
++++ ../aufg4/include/machine/context.h  2015-06-08 12:03:12.699726477 +0200
+@@ -0,0 +1,72 @@
++/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\
++ *                                 Technische Informatik II                                      *
++ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
++ *                                                                                               *
++ *                                       C O N T E X T                                           *
++ *                                                                                               *
++\* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
++
++#ifndef __context_include__
++#define __context_include__
++
++class Thread;
++
++/* * * * * * * * * * * * * * * * * * * * * * * * *\
++#                    CLASSES                      #
++\* * * * * * * * * * * * * * * * * * * * * * * * */
++
++/** \brief Storage for current context of thread
++ *
++ *  This class contains all information needed to represent a thread of execution.
++ *  It may be used to stop, switch and continue currently running threads.
++ *
++ **/
++class Context{
++  private:
++    /** \brief Definition of a storage type able to hold CPU register contents. **/
++    typedef void* Register;
++    
++    /** \brief Index enumeration mapping registers to indices of the registers array **/
++    enum RegisterIndices{
++      ebx = 0, /**< General purpose register **/
++      esi = 1, /**< General purpose register **/
++      edi = 2, /**< General purpose register **/
++      esp = 3, /**< Stack pointer **/
++      ebp = 4  /**< Base pointer **/
++    };
++
++    /** \brief the non-volatile x86 base registers **/
++    Register registers[5];
++
++    /** \brief Local 1K stack of this thread. **/
++    Register stack[1024];
++
++  public:
++    /** \brief Context creation
++     *
++     *  On construction of the context the CPU registers will be filled with appropriate information, to start the
++     *  thread on its first scheduling
++     *
++     *  \param thread pointer to thread object
++     *
++     **/
++    Context(Thread* thread);
++
++    /** \brief swaps the currently running context with the specified one
++     * 
++     *  During the swap process the registers of the currently active context will be updated with the actualk values
++     *  contained in the CPU.
++     *
++     *  \param next the next context to be run by the CPU
++     */
++    void swap(Context& next);
++
++    /** \brief replaces the currently running context with this one
++     * 
++     *  This method does not preserve the old context. Therefore the current execution state of the originating thread
++     *  is lost.
++     **/
++    void set();
++};
++
++#endif
+diff -rupN -x .git ./include/machine/cpu.h ../aufg4/include/machine/cpu.h
+--- ./include/machine/cpu.h 2015-06-08 12:03:24.071788162 +0200
++++ ../aufg4/include/machine/cpu.h  2015-06-08 12:03:12.699726477 +0200
+@@ -29,7 +29,7 @@ class CPU {
+     
+     /** \~german
+      *  \~english
+-     *  \brief globally dissable interrupts and return previous state
++     *  \brief globally disable interrupts and return previous state
+      *  \return previous interrupt state
+      **/
+     inline bool disable_int () {
+diff -rupN -x .git ./include/machine/pit.h ../aufg4/include/machine/pit.h
+--- ./include/machine/pit.h 1970-01-01 01:00:00.000000000 +0100
++++ ../aufg4/include/machine/pit.h  2015-06-08 12:03:12.700726482 +0200
+@@ -0,0 +1,110 @@
++/*---------------------------------------------------------------------------*
++ * Operating Systems I                                                       *
++ *---------------------------------------------------------------------------*
++ *                                                                           *
++ *                                  P I T                                    *
++ *                                                                           *
++ *---------------------------------------------------------------------------*/
++
++#ifndef __pit_include__
++#define __pit_include__
++
++#include "stdint.h"
++#include "machine/io_port.h"
++
++/** 
++ * Class PIT implements the 'Programmable Interval Timer' used to programm the
++ * timer interrupt.
++ */
++class PIT { 
++private:
++ enum Parameters
++ {
++   timestep = 838,         /**< time of one tick in nanoseconds **/
++   maxUS = 0xFFFFUL*timestep/1000  /**< max timer interval in microseconds **/
++ };
++
++ enum Ports{
++   counter0Port=0x40,
++   counter1Port=0x41,
++   counter2Port=0x42,
++   ctrl0Port=0x43,
++   counter3Port=0x48,
++   counter4Port=0x49,
++   counter5Port=0x4A,
++   ctrl1Port=0x4B
++ };
++
++ enum CountTypes
++ {
++   binary,
++   bcd
++ };
++
++ enum CountModes
++ {
++   intOnTerminal,
++   hwOneShot,
++   rateGen,
++   squareWave,
++   swStrobe,
++   hwStrobe
++ };
++
++ enum RWTypes
++ {
++   latch,
++   lowOnly,
++   highOnly,
++   lowThenHigh
++ };
++
++ enum Counters
++ {
++   counter0,
++   counter1,
++   counter2
++ };
++
++ union PitControlByte
++ {
++   struct 
++   {
++     CountTypes countType : 1;
++     CountModes mode : 3;
++     RWTypes rwType : 2;
++     Counters counter : 2;
++   };
++   uint8_t ctrlByte;
++ } pcb;
++
++ unsigned short currIntervall;
++
++public:
++  /**
++   * Default constructor initialiseing the timer interval.
++   */
++  PIT();
++
++  /**
++   * Default constructor initialiseing the timer interval.
++   */
++  virtual ~PIT();
++  
++  /**
++   * Method 'interval()' returns the timer interval of the PIT.
++   *
++   * @return the timer interval of the PIT as int value.
++   */
++  unsigned short interval ();
++  
++  /**
++   * Method 'interval()' implements the programming of the timer interrupt using
++   * IO_Ports.
++   * 
++   * @param us timer interval (int)
++   */
++  void interval(unsigned short us); 
++};
++
++#endif
+diff -rupN -x .git ./include/object/cpu.h ../aufg4/include/object/cpu.h
+--- ./include/object/cpu.h  2015-06-08 12:03:24.072788168 +0200
++++ ../aufg4/include/object/cpu.h 2015-06-08 12:03:12.700726482 +0200
+@@ -2,7 +2,7 @@
+  *                                 Technische Informatik II                                      *
+  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+  *                                                                                               *
+- *                                        object/cpu                                             *
++ *                                     C P U - O B J E C T                                       *
+  *                                                                                               *
+ \* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+ 
+diff -rupN -x .git ./include/object/imanager.h ../aufg4/include/object/imanager.h
+--- ./include/object/imanager.h 2015-06-08 12:03:24.072788168 +0200
++++ ../aufg4/include/object/imanager.h  2015-06-08 12:03:12.700726482 +0200
+@@ -2,8 +2,14 @@
+  *                                   Technische Informatik II                                    *
+  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+  *                                                                                               *
+- *                                        object/interruptmanager                                *
++ *                                 I M A N A G E R - O B J E C T                                 *
+  *                                                                                               *
+ \* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
++
++#ifndef __imanager_object_header__
++#define __imanager_object_header__
++
+ #include "device/interruptmanager.h"
+ extern InterruptManager iManager;
++
++#endif
+diff -rupN -x .git ./include/object/keyboard.h ../aufg4/include/object/keyboard.h
+--- ./include/object/keyboard.h 2015-06-08 12:03:24.072788168 +0200
++++ ../aufg4/include/object/keyboard.h  2015-06-08 12:03:12.701726488 +0200
+@@ -2,8 +2,14 @@
+  *                                   Technische Informatik II                                    * 
+  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+  *                                                                                               * 
+- *                                        object/keyboard                                        * 
++ *                                 K E Y B O A R D - O B J E C T                                 * 
+  *                                                                                               * 
+ \* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
++
++#ifndef __keyboard_object_header__
++#define __keyboard_object_header__
++
+ #include "device/keyboard.h"
+ extern Keyboard keyboard;
++
++#endif
+diff -rupN -x .git ./include/object/kout.h ../aufg4/include/object/kout.h
+--- ./include/object/kout.h 2015-06-08 12:03:24.072788168 +0200
++++ ../aufg4/include/object/kout.h  2015-06-08 12:03:12.701726488 +0200
+@@ -2,7 +2,7 @@
+  *                                 Technische Informatik II                                      *
+  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+  *                                                                                               *
+- *                                       object/kout                                             *
++ *                                  K O U T _ O B J E C T                                        *
+  *                                                                                               *
+ \* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+ 
+diff -rupN -x .git ./include/object/lock.h ../aufg4/include/object/lock.h
+--- ./include/object/lock.h 1970-01-01 01:00:00.000000000 +0100
++++ ../aufg4/include/object/lock.h  2015-06-08 12:03:12.701726488 +0200
+@@ -0,0 +1,15 @@
++/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\
++ *                                   Technische Informatik II                                    * 
++ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
++ *                                                                                               * 
++ *                                 L O C K - O B J E C T                                         * 
++ *                                                                                               * 
++\* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
++
++#ifndef __keyboard_object_header__
++#define __keyboard_object_header__
++
++#include "locking/interruptLock.h"
++extern InterruptLock lock;
++
++#endif
+diff -rupN -x .git ./include/object/scheduler.h ../aufg4/include/object/scheduler.h
+--- ./include/object/scheduler.h  1970-01-01 01:00:00.000000000 +0100
++++ ../aufg4/include/object/scheduler.h 2015-06-08 12:03:12.701726488 +0200
+@@ -0,0 +1,16 @@
++/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\
++ *                                 Technische Informatik II                                      *
++ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
++ *                                                                                               *
++ *                              S C H E D U L E R - O B J E C T                                  *
++ *                                                                                               *
++\* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
++
++#ifndef __scheduler_object_header
++#define __scheduler_object_header
++
++#include "thread/scheduler.h"
++
++extern Scheduler scheduler;
++
++#endif
+diff -rupN -x .git ./include/thread/dispatch.h ../aufg4/include/thread/dispatch.h
+--- ./include/thread/dispatch.h 1970-01-01 01:00:00.000000000 +0100
++++ ../aufg4/include/thread/dispatch.h  2015-06-08 12:03:12.701726488 +0200
+@@ -0,0 +1,75 @@
++/*---------------------------------------------------------------------------*
++ * Operating Systems I                                                       *
++ *---------------------------------------------------------------------------*
++ *                                                                           *
++ *                          D I S P A T C H E R                              *
++ *                                                                           *
++ *---------------------------------------------------------------------------*/
++
++#ifndef __dispatch_include__
++#define __dispatch_include__
++
++/* * * * * * * * * * * * * * * * * * * * * * * * *\
++#                    INCLUDES                     #
++\* * * * * * * * * * * * * * * * * * * * * * * * */
++
++#include "thread/thread.h"
++
++/* * * * * * * * * * * * * * * * * * * * * * * * *\
++#                    CLASSES                      #
++\* * * * * * * * * * * * * * * * * * * * * * * * */
++
++/** \brief Managing currently active threads.
++ *
++ * The dispatcher changes the currently active thread if the system. It keeps
++ * track of all effectively running therads and management the transition of
++ * one thread to another. In the current setup only single CPU systems are
++ * supported.
++ *
++ **/
++class Dispatcher {
++private:
++  /** 
++   * \~english
++   * \brief The currently active thread
++   */
++   Thread* current;
++  
++
++public:
++  /** 
++   * \~english
++   * \brief Default constructor.
++   */
++  Dispatcher() : current(0){}
++
++  /** \brief Starts the scheduling
++   *
++   * The scheduling is started through a transition to the first thread
++   * available in the system. This transition is one way. The original context
++   * is not saved and can therefore never be restored.
++   *
++   * \param first Reference of the first thread scheduled in the system.
++   */
++  void start(Thread& first);
++
++  /** \brief  Switch to another thread
++   *
++   * The new thread is specified as the parameter of the call. During the
++   * transition the old thread context is saved and the new thread context is
++   * installed on the CPU.
++   *
++   * \param next Reference to the new active thread.
++   */
++  void dispatch(Thread& next);
++
++  /** \brief Returns the currently active thread.
++   *
++   * \return pointer to the currently active thread.
++   */
++  Thread* active() const{
++   return current;
++  }
++};
++
++#endif
+diff -rupN -x .git ./include/thread/scheduler.h ../aufg4/include/thread/scheduler.h
+--- ./include/thread/scheduler.h  1970-01-01 01:00:00.000000000 +0100
++++ ../aufg4/include/thread/scheduler.h 2015-06-08 12:03:12.701726488 +0200
+@@ -0,0 +1,88 @@
++/*---------------------------------------------------------------------------*
++ * Operating Systems I                                                       *
++ *---------------------------------------------------------------------------*
++ *                                                                           *
++ *                          S C H E D U L E R                                *
++ *                                                                           *
++ *---------------------------------------------------------------------------*/
++
++#ifndef __schedule_include__
++#define __schedule_include__
++
++#include "thread/dispatch.h"
++#include "common/queue.h"
++#include "device/watch.h"
++
++class Thread;
++
++/**
++ * \~english
++ * \brief Basic Scheduler
++ *  
++ * This class represent a simple FIFO-Scheduler. It holds a list of the
++ * currently available threads. Through the \ref Scheduler::yield method it
++ * can issue a context switch to another ready thread. The resulting context
++ * switch may also switch to the same thread if the ready list is empty.
++ *
++ **/
++class Scheduler : protected Dispatcher {
++private:
++  /** \brief Queue of threads that are ready to be processed **/
++    Queue threads;
++
++  /** \brief flag set upon start of scheduler **/
++    bool started;
++
++
++public:
++  /** \brief Default Constructor clearing started flag **/
++  Scheduler();
++
++  /** \brief Default Destructor clearing started flag **/
++  ~Scheduler();
++
++  /** \brief Start the scheduling by starting the first thread
++   **/ 
++ void start();
++  
++  /** \brief Insert the specified thread into the queue
++   *
++   * of threads that are ready to be processed.
++   *
++   * @param that reference to the thread to be inserted
++   **/
++  void insert(Thread& that);
++
++  /** \brief Remove the currently active thread from the queue
++   *
++   * of thread and resumes with the next thread. If there are no
++   * more threads the scheduler starts an idle loop.
++   **/
++  void exit();
++
++  /** \brief Remove the specified thread from the queue of threads, killing the execution of this thread.
++   *
++   * @param that reference of the thread to be killed.
++   * @returns whether operation was successful
++   */
++  bool kill(Thread& that);
++
++  /** \brief Yield to another ready thread **/
++  void yield();
++private:
++  /** \brief helper function stop the execution of the current thread and switch to next one
++   *
++   *  This helper function unifies the scheduling of the next thread
++   **/
++  void next();
++
++  /** \brief helper function to yield unguarded to another thread
++   *
++   *  This helper function is used by watch to preempt the currently running thread.
++   **/
++  void preempt();
++
++  friend void Watch::trigger();
++};
++
++#endif
+diff -rupN -x .git ./include/thread/thread.h ../aufg4/include/thread/thread.h
+--- ./include/thread/thread.h 1970-01-01 01:00:00.000000000 +0100
++++ ../aufg4/include/thread/thread.h  2015-06-08 12:03:12.701726488 +0200
+@@ -0,0 +1,94 @@
++/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\
++ *                                   Technische Informatik II                                    * 
++ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
++ *                                                                                               * 
++ *                                          T H R E A D                                          * 
++ *                                                                                               * 
++\* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
++
++#ifndef __thread_include__
++#define __thread_include__
++
++/* * * * * * * * * * * * * * * * * * * * * * * * *\
++#                    INCLUDES                     #
++\* * * * * * * * * * * * * * * * * * * * * * * * */
++
++#include "machine/context.h"
++#include "common/queue.h"
++
++/* * * * * * * * * * * * * * * * * * * * * * * * *\
++#                    CLASSES                      #
++\* * * * * * * * * * * * * * * * * * * * * * * * */
++
++/**
++ *  \~english
++ *  \brief Basic multitasking entity.  
++ *
++ *  Threads are the entities of scheduling. They are either part of the queue
++ *  of threads ready for execution, blocked by a specific semaphore or currently
++ *  running. This class defines the needed data structure to represent the
++ *  context of a single thread(thread specific stack and thread control block).
++ *  Additionally a C function is defined to help initiating the thread specific
++ *  action.
++ *
++ **/
++class Thread : public Queue::Element{
++
++  private:
++    /** \brief %Thread context for the specific architecture. **/
++    Context context;
++
++    /** \brief Kickoff function to initiate thread action.
++     * 
++     * \param thread the thread to be started
++     **/
++    static void kickoff(Thread* thread);
++
++  public:
++  /**
++   * \~english
++   * \brief Default constructor.
++   *
++   * Initializes the thread control block.
++   **/
++  Thread();
++
++  /**
++   * \~english
++   * \brief Destructor.
++   *
++   * Terminates the execution of this thread.
++   **/
++  ~Thread();
++
++  /**
++   * \~english
++   * \brief Yield execution to another ready thread.
++   *
++   * This method forwards the call to the global scheduler.
++   **/
++  void yield();
++
++  /**
++   * \~english
++   * \brief Terminate execution of this thread.
++   *
++   * This method forwards the call to the global scheduler
++   **/
++  void exit();
++
++  /**
++   * \~english
++   * \brief %Thread specific task method.
++   *
++   * This method needs to be overwritten by an application inheriting from Thread.
++   **/
++  virtual void action() =0;
++
++  /** \brief To enable switching of contexts **/
++  friend class Dispatcher;
++  /** \brief To enable access to kickoff **/
++  friend class Context;
++};
++
++#endif
+diff -rupN -x .git ./include/user/appl.h ../aufg4/include/user/appl.h
+--- ./include/user/appl.h 2015-06-08 12:03:24.072788168 +0200
++++ ../aufg4/include/user/appl.h  2015-06-08 12:03:12.701726488 +0200
+@@ -9,14 +9,15 @@
+ #ifndef __application_include__
+ #define __application_include__
+ 
++#include "thread/thread.h"
++
+ /** \brief Basis of OOStuBs-Applications
+  *
+  * This class defines the only application used by oo-StuBS. Every application
+  * class is derived from this class.
+  */        
+-class Application {
++class Application : public Thread{
+   public:
+-    
+     /** \brief Start the application
+      *
+      * This method must be overwritten by the derived class.
+diff -rupN -x .git ./include/user/task1.h ../aufg4/include/user/task1.h
+--- ./include/user/task1.h  2015-06-08 12:03:24.072788168 +0200
++++ ../aufg4/include/user/task1.h 2015-06-08 12:03:12.701726488 +0200
+@@ -125,19 +125,19 @@ class Task1 : public Application{
+     /** \brief test the functionality of the Keyboard_Controller object **/
+     void testKeyboard();
+     
+-  public:
+-    /** \brief Constructor
+-     *
+-     * \param magic bootloader provided magic value
+-     * \param mbi pointer to multiboot info structure
+-     **/
+-    Task1(uint32_t magic, const ::Multiboot_Info* mbi);
+-    
++  public:  
+     /** \brief parse and print multiboot information
+      *
+      * test also the implementation of CGA_Stream and Keyboard_Controller
+      **/
+     virtual void action();
+-};
++
++    /** \brief sets pointer to multiboot information and magic constant
++     *
++     * \param mbi the pointer to the multiboot information structure
++     * \param magic the magic constant passed by a multiboot compliant loader
++     **/
++    void setup(uint32_t magic, const ::Multiboot_Info* mbi);
++};  
+ 
+ #endif
+diff -rupN -x .git ./include/user/task4.h ../aufg4/include/user/task4.h
+--- ./include/user/task4.h  1970-01-01 01:00:00.000000000 +0100
++++ ../aufg4/include/user/task4.h 2015-06-08 12:03:12.702726493 +0200
+@@ -0,0 +1,107 @@
++#include "user/appl.h"
++
++/** \brief Fourth test application
++ *
++ * Showing the functionality of coroutine scheduling, by starting 3 coroutine
++ * based applications.
++ **/
++class Task4 : public Application{
++ private:
++
++enum Constants{
++ rotCursorX=79,
++ rotCursorY=0,
++ counter1X=10,
++ counter1Y=10,
++ counter2X=10,
++ counter2Y=15,
++};
++    bool coop;
++
++/** \brief %Rotating symbol application
++ *
++ * This coroutine creates a rotating symbol in the upper left corner of the
++ * screen, to show "quasi"-parallel execution of coroutines
++ **/
++class RotCursor : public Application
++{
++ private:
++   /**\brief internal state to save current symbol **/
++   unsigned char i;
++   unsigned short x, y;
++        bool coop;
++        
++        void enableCoop(){coop=true;}
++ public:
++   /** \brief Default constructor
++    *
++    * Setting the start symbol
++    **/
++   RotCursor(unsigned short x, unsigned short y);
++
++   /** \brief start outputting the symbol
++    *
++    * This method resumes after each interation
++    **/
++   virtual void action();
++    friend class Task4;
++};
++
++/** \brief Counting application
++ *
++ * This coroutine counts a value on a fixed position on the screen
++ **/
++class Counter : public Application
++{
++ private:
++   /** \brief current counter value **/
++   unsigned int i;
++   unsigned short x, y;
++        bool coop;
++
++        void enableCoop(){coop=true;}
++ public:
++   /** \brief Default constructor
++    *
++    * Setting the counter to 0
++    **/
++   Counter(unsigned short x, unsigned short y);
++
++   /** \brief start outputting and incrementing the counter value
++    *
++    * This method resumes after each interation
++    **/
++   virtual void action();
++
++   friend class Task4;
++};
++
++   /** \brief Application for a rotating symbol **/
++   RotCursor rotCursor;
++   /** \brief Application for a printed out counter **/
++   Counter counter1;
++   /** \brief Application for a printed out counter **/
++   Counter counter2;
++
++ public:
++   /** \brief Default Constructor 
++    *
++    * Setting the applications up
++    **/
++   Task4();
++
++    /** \brief Default Destructor 
++    *
++    * Logging the end of the setup process
++    **/
++    ~Task4();
++
++   /** \brief start operation
++    *
++    * registers the applications with the scheduler and exit afterwards
++    **/
++   virtual void action();
++
++    /** \brief switch sub tasks to cooperative scheduling **/
++    void enableCoop();
++};
+diff -rupN -x .git ./misc/linux/config.mk ../aufg4/misc/linux/config.mk
+--- ./misc/linux/config.mk  2015-06-08 12:03:24.073788173 +0200
++++ ../aufg4/misc/linux/config.mk 2015-06-08 12:03:12.702726493 +0200
+@@ -14,6 +14,6 @@ CXXFLAGS+=${CFLAGS} -fno-rtti -nostdinc+
+ LDFLAGS=-e entry -T misc/sections
+ 
+ OBJDUMPFLAGS=-Cxd
+-EMUFLAGS+=-no-kvm -net none -vga std -kernel
+-DEBUGFLAGS+=-s -S
++EMUFLAGS+=-no-kvm -net none -vga std -serial stdio
++EMUDEBUG+=-no-kvm -net none -vga std -serial file:"log" -S -s -daemonize
+ GDBFLAGS+=-x misc/gdb.script
+diff -rupN -x .git ./misc/rules.mk ../aufg4/misc/rules.mk
+--- ./misc/rules.mk 2015-06-08 12:03:24.074788179 +0200
++++ ../aufg4/misc/rules.mk  2015-06-08 12:03:12.703726499 +0200
+@@ -16,7 +16,7 @@ SED:=@${SED}
+ OBJDUMP:=@${OBJDUMP}
+ 
+ BOOT_OBJECT      := ${BUILD}/boot.o
+-SOURCES          := $(wildcard ${SRC}/*/*.cc ${SRC}/*.cc ${SRC}/*/*.S)
++SOURCES          := $(wildcard ${SRC}/*/*.c ${SRC}/*/*.cc ${SRC}/*.cc ${SRC}/*/*.S)
+ HEADERS          := $(filter %.h, $(wildcard ${INCLUDE}/*/*.h))
+ DOXS             := $(wildcard ${DOC}/*.dox)
+ SYSTEM_OBJECTS   := $(filter-out ${BOOT_OBJECT}, $(addprefix ${BUILD}/,$(filter-out ${OBJECT_IGNORE}, $(addsuffix .o,$(basename $(notdir ${SOURCES}))))))
+@@ -30,11 +30,12 @@ LIBS             := $(addprefix -l,${LIB
+ ASMFLAGS         := $(foreach VAR, ${ASMFLAGS}, -Wa,${VAR})
+ BUILD_GARBAGE    := $(wildcard *~ *.sw?) ${BIN} ${BUILD} $(wildcard *.dump)
+ DOC_GARBAGE      := ${DOC}/html ${DOC}/log
+-GARBAGE          := $(BUILD_GARBAGE) $(DOC_GARBAGE)
++GARBAGE          := $(BUILD_GARBAGE) $(DOC_GARBAGE) log
+ 
+ .PHONY: all clean run debug doc dump cleanDoc cleanBuild
+ 
+-vpath %.cc ${SRC} ${SRC}/machine ${SRC}/user ${SRC}/common ${SRC}/device ${SRC}/boot
++vpath %.cc ${SRC} ${SRC}/machine ${SRC}/user ${SRC}/common ${SRC}/device ${SRC}/boot ${SRC}/thread ${SRC}/locking
++vpath %.c ${SRC}/boot
+ vpath %.S  ${SRC}/boot
+ 
+ all: ${TARGET}
+diff -rupN -x .git ./patch4.patch ../aufg4/patch4.patch
+--- ./patch4.patch  2015-06-08 12:16:12.313954461 +0200
++++ ../aufg4/patch4.patch 1970-01-01 01:00:00.000000000 +0100
+@@ -1,1344 +0,0 @@
+-diff -rupN -x .git ./doc/mainpage.dox ../aufg4/doc/mainpage.dox
+---- ./doc/mainpage.dox 2015-06-08 12:03:23.950787504 +0200
+-+++ ../aufg4/doc/mainpage.dox  2015-06-08 12:03:12.577725815 +0200
+-@@ -12,6 +12,7 @@
+-  * \ref task1 \n
+-  * \ref task2 \n
+-  * \ref task3 \n
+-+ * \ref task4 \n
+-  * 
+-  * \section main_sec3 Entwicklungsumgebung
+-  * Auf der folgenden Seite ist die Entwicklungsumgebung beschrieben. \n
+-@@ -34,6 +35,7 @@
+-  * \ref task1 \n
+-  * \ref task2 \n
+-  * \ref task3 \n
+-+ * \ref task4 \n
+-  * 
+-  * \section main_sec3 Development Environment
+-  * The following side describe the environment. \n
+-diff -rupN -x .git ./doc/task3.dox ../aufg4/doc/task3.dox
+---- ./doc/task3.dox  2015-06-08 12:03:24.069788152 +0200
+-+++ ../aufg4/doc/task3.dox 2015-06-08 12:03:12.697726466 +0200
+-@@ -12,12 +12,9 @@
+-  * in dieser Aufgabe um Fehlermeldungen der x86-CPU und dem Stackaufbau bei Funktionsaufrufen.
+-  * 
+-  * Zu diesem Zweck sind in zwei Teilfunktionen die Stacks zu untersuchen und deren
+-- * Struktur zu interpretieren. 
+-- * 
+-- * Zusätzlich ist ein potentieller Schadcode zu finden und sein Einfallstor zu überprüfen. 
+-- * 
+-- * In dieser Aufgabe ist keine eigene Implementierung notwendig!
+-+ * Struktur zu interpretieren. In dieser Aufgabe ist keine eigene Implementierung notwendig! 
+-  *
+-+ * 
+-  * \section task3_sec3 Implementierung und Fragen
+-  * Die Vorgabe bringt zwei neue Task-Anwendungen, \ref Task3A und \ref Task3B.
+-  * Beim Start des OS kann zwischen beiden Aufgaben gewählt werden, wobei deren 
+-@@ -65,20 +62,7 @@
+-  * Wie erscheint das Array \"ende\" im Speicher? \n
+-  * In welcher Reihenfolge werden Parameter bei einem Funktionsaufruf auf den Stack gelegt? \n
+-  * 
+-- * \subsection task3_sec3_3 Teil C
+-- * Wir haben ein Sicherheitsleck in OOStuBs, wodurch es Angreifern gelungen ist,
+-- * potentiell schädlichen Code in das System einzuschleusen. Führen Sie eine Analyse
+-- * des Schadcodes durch und vollziehen sie nach, wie der Angreifer seinen Code ausführen konnte.
+-- * \n
+-- * \b Hinweis: \n
+-- * Nutzen Sie zur Analyse den gdb, in Eclipse werden Sie den Schadcode nicht lesen können.\n
+-- * \n
+-- * \b Fragen: \n
+-- * Welchen Schadcode führt der Angreifer aus? \n
+-- * Wie versteckt sich der Angreifer vor Analysen? \n
+-- * Wie konnte er seinen Code ausführen? \n
+-- * Wie hätte man dies verhindern können? \n
+-- *
+-+ * 
+-  * \section task3_sec4 Hilfestellung
+-  *   \li \subpage task3_procstack
+-  *   \li \subpage task3_exception
+-diff -rupN -x .git ./doc/task4.dox ../aufg4/doc/task4.dox
+---- ./doc/task4.dox  1970-01-01 01:00:00.000000000 +0100
+-+++ ../aufg4/doc/task4.dox 2015-06-08 12:03:12.697726466 +0200
+-@@ -0,0 +1,202 @@
+-+/**
+-+ * \page task4 Aufgabe 4 - Threads
+-+ * \tableofcontents
+-+ * 
+-+ 
+-+ * Das Ziel dieser Aufgabe ist die Vermittlung einer der wichtigsten Abstraktionen moderner Betriebssysteme: Threads
+-+ * und deren Scheduling. Hierfür wird das bestehende System um folgende Klassen erweitert.
+-+ 
+-+  \dot
+-+  digraph task1 {
+-+    size="5.9,5.5";
+-+    node [shape=box, style="solid,filled", fillcolor=white];
+-+    
+-+    
+-+    kernel [label="kernel(...)", shape=oval, URL="\ref kernel"];
+-+    
+-+    subgraph cluster_subuser {
+-+      rank="source";
+-+      style=filled;
+-+      color=lightgray;
+-+      label = "user";
+-+      labeljust=l;
+-+      task4 [label="Task4", URL="\ref Task4"];
+-+      rotcursor [label="RotCursor", URL="\ref Task4::RotCursor"];
+-+      counter [label="Counter", URL="\ref Task4::Counter"];
+-+      appl [label="Application", URL="\ref Application"];
+-+    }
+-+    
+-+    subgraph cluster_submachine {
+-+      style=filled;
+-+      color=lightgray;
+-+      label = "machine";
+-+      labeljust=r;
+-+      pit       [label="PIT", URL="\ref PIT", color=blue];
+-+      context   [label="Context", URL="\ref Context"];
+-+    }
+-+
+-+    subgraph cluster_subcommon {
+-+      style=filled;
+-+      color=lightgray;
+-+      label = "common";
+-+      labeljust=c;
+-+      queue [label="Queue", URL="\ref Queue"];
+-+      elem  [label="Queue::Element", URL="\ref Queue::Element"];
+-+    }
+-+    
+-+    subgraph cluster_subdevice {
+-+      style=filled;
+-+      color=lightgray;
+-+      label = "device";
+-+      labeljust=c;
+-+      watch [label="Watch", URL="\ref Watch", color=blue];
+-+      log   [label="Log", URL="\ref Log"]
+-+    }
+-+
+-+    subgraph cluster_subthread {
+-+      style=filled;
+-+      color=lightgray;
+-+      label = "thread";
+-+      labeljust=c;
+-+      thread [label="Thread", URL="\ref Thread", color=blue];
+-+      dispatcher [label="Dispatcher", URL="\ref Dispatcher", color=blue];
+-+      schedulerC [label="Scheduler", URL="\ref Scheduler", color=blue];
+-+    }
+-+
+-+    subgraph cluster_sublocking {
+-+      style=filled;
+-+      color=lightgray;
+-+      label = "locking";
+-+      labeljust=c;
+-+      interruptlock [label="InterruptLock", URL="\ref InterruptLock"];
+-+      scopedlock [label="ScopedLock", URL="\ref ScopedLock"];
+-+    }
+-+
+-+    subgraph cluster_subobject{
+-+      style=filled;
+-+      color=lightgray;
+-+      label = "object";
+-+      labeljust=c;
+-+      lock [label="lock", URL="\ref lock"];
+-+      schedulerO [label="scheduler", URL="\ref scheduler"];
+-+    }
+-+    
+-+    watch -> pit [arrowhead="empty"];
+-+    lock -> interruptlock [dir="none"];
+-+    scopedlock -> lock [arrowhead="open"];
+-+    schedulerC -> dispatcher [arrowhead="empty"];
+-+    schedulerC -> queue [dir="none"];
+-+    schedulerC -> thread [dir="none"];
+-+    schedulerO -> schedulerC [arrowhead="open"];
+-+    thread -> context [dir="none"];
+-+    kernel -> schedulerO [arrowhead="open"];
+-+    watch -> schedulerO [arrowhead="open"];
+-+    schedulerC -> scopedlock [dir="none"];
+-+    thread -> lock [arrowhead="open"];
+-+    thread -> elem [arrowhead="empty"];
+-+    queue -> elem [dir="none"];
+-+    task4 -> appl [arrowhead="empty"];
+-+    appl -> thread [arrowhead="empty"];
+-+    rotcursor -> appl [arrowhead="empty"];
+-+    counter -> appl [arrowhead="empty"];
+-+    task4 -> rotcursor [dir="none"];
+-+    task4 -> counter [dir="none"];
+-+    }
+-+    \enddot
+-+
+-+ * Die Einbindung der Klassen sowie deren Implementierung kann in 2 Unteraufgaben unterteilt werden:
+-+ 
+-+ 
+-+ * \section task4_a Aufgabe A - Kooperatives Scheduling
+-+ *
+-+ 
+-+ * Diese Aufgabe befasst sich mit kooperativen Scheduling. Daher muss jeder
+-+ * Thread individuell die Aktivität an andere Threads übergeben, es findet kein
+-+ * preemptives Scheduling statt.
+-+ 
+-+ 
+-+ * Die Klasse \ref Task4 initialisiert in \ref Task4::action zum Testen der
+-+ * entsprechenden Funktionen drei Applikationen \ref Task4::counter1, \ref
+-+ * Task4::counter2 und \ref Task4::rotCursor. Diese Unterapplikationen werden in \ref
+-+ * Task4::action dem Scheduler als bereite Threads übergeben (Funktion \ref
+-+ * Scheduler::insert). Das Applikationen-Interface \ref Application wurde so erweitert, dass es von \ref Thread erbt.
+-+ * Daher sind von nun an alle Applikationen auch Threads. Bei der Erstellung einer Applikation wird diese sofort im
+-+ * Scheduler als bereiter Thread eingetragen. Daher können alle vorhergehenden Funktionen nun auch durch den Scheduler
+-+ * aufgerufen werden. 
+-+
+-+ * Der Scheduler legt die Anwendungen in seiner Ready-Queue ab, die dann
+-+ * sequentiell durchlaufen wird. Wir verwenden dafür eine spezielle \ref Queue, die ohne Speicherverwaltung auskommt.
+-+
+-+ * Das Umschalten zwischen den verschiedenen Threads geschiet durch die
+-+ * Scheduler Funktion \ref Scheduler::yield oder \ref Scheduler::exit. Diese
+-+ * sind zur leichter Benutzbarkeit bereits in Thread als \ref Thread::yield bzw. \ref Thread::exit vorgesehen.
+-+ * Da alle Applikationen von Thread erben, sind diese Funktionen damit im Context aller Applikationen verfügbar.
+-+ 
+-+ * Der eigentliche Kontextwechsel wird dann durch den \ref Dispatcher
+-+ * vorgenommen. Dieser soll hierfür die gespeicherten \ref Context der Threads umschalten. Hierfür bietet der \ref
+-+ * Context zwei Funktionen \ref Context::set um den ersten Thread des Systems zu starten und \ref Context::swap um
+-+ * zwischen 2 Threads zu wechseln.
+-+ 
+-+ * Das Starten des ersten Threads des Systems, Task4, geschieht durch anlegen desselben und anschließenden Aufruf von
+-+ * \ref Scheduler::start. Diese Funktion wird am Ende von \ref kernel aufgerufen und kehrt nie zurück!
+-+ 
+-+ * \subsection task4_a_steps Vorgeschlagenes Vorgehen zum Lösen von Teil A
+-+ *   \li Implementieren Sie die Methode \ref Scheduler::start und \ref Scheduler::insert mit den
+-+ *   Abhängigkeiten des Dispatchers. Ebenso müssen Sie die statische Methode \ref Thread::kickoff implementieren um die
+-+ *   Ausführung von Thread::action einzuleiten.
+-+ *
+-+ *   \li Verifizieren Sie den initialen Kontextwechsel Task4::action, indem Sie verhindern, dass Task4 endet. Hierzu
+-+ *   sollten Sie eine Endlossschleife am Ende von \ref Task4::action einfügen
+-+ *
+-+ *   \li Implementieren Sie \ref Scheduler::yield, die den neuen Task lädt und
+-+ *   den alten in der Queue abspeichert. Zudem muss der Dispatcher aufgerufen
+-+ *   werden \ref Dispatcher::dispatch. Erweitern Sie ihre Endlosschleife am Ende von \ref Task4::action durch eine
+-+ *   Aufruf von \ref Thread::yield
+-+ *
+-+ *   \li Füllen Sie die Methode \ref Scheduler::exit (Beenden und Löschen des
+-+ *   aktuellen Threads) und \ref Scheduler::kill (Löschen eines
+-+ *   nicht-aktiven Threads) mit Ihrem Code. 
+-+ *
+-+ *   \li Entfernen Sie die Endlosschleife am Ende von \ref Task4::action und testen Sie die Aufgabe.
+-+
+-+ * \section task4_b Aufgabe B - Preemptives Scheduling
+-+ *
+-+ * Preemtives Scheduling erweitert das kooperative Scheduling um einen
+-+ * periodischen asynchronen Aufruf von \ref Scheduler::preempt.
+-+ 
+-+ * Hierdurch wird einerseits ein interaktiverer Betrieb ermöglicht,
+-+ * andererseits muss aber der Umschaltvorgang an sich geschützt werden um die
+-+ * Konsistenz der beteiligten Datenstrukturen sicherzustellen.  In unserem
+-+ * Beispiel muss lediglich der Zugriff auf die Warteschlange als kritischer
+-+ * Abschnitt geschützt werden. Dazu wird ein globaler Lock \ref lock bereitgestellt.
+-+ 
+-+ * \note \ref InterruptLock darf nicht geschachtelt benutzt werden. D.h. \ref InterruptLock::lock und \ref InterruptLock::unlock dürfen nicht doppelt hinter einander aufgerufen werden, da der Lock sonst einen unbestimmten Zustand gerät. Zum Vermeiden dieses Umstandes, werden Warnungen ausgegeben, sobald dies auftreten sollte. Durch einen Breakpoint an der Stelle der Warnungen kann man in solch einem Fall herausfinden, wodurch dies aufgetreten ist. 
+-+
+-+ * Dieses Objekt der Klasse \ref InterruptLock sperrt und entsperrt die globalen Interrupts.
+-+ * Einerseits können die Funktionen des Locks \ref InterruptLock::lock und \ref InterruptLock::unlock direkt aufgerufen werden,
+-+ * was jedoch fehleranfällig ist, oder sie können über einen \ref ScopedLock and die Existenz eines Objektes gebunden werden.
+-+ * \ref ScopedLock kann auch verschachtelt genutzt werden. Wird ein ScopedLock zu einem Zeitpunkt erstellt, zu dem der globale
+-+ * Lock bereits gelockt war, hat der neue ScopedLock keine Auswirkungen. Die Aufhebung des Locks liegt in der Verantwortung desjenigen
+-+ * der den Lock erstmalig gelockt hat.
+-+ * \code 
+-+{
+-+  ScopedLock scopedLock(lock);
+-+  ...
+-+}\endcode
+-+
+-+ * Dieses Code Fragment erzeugt eine kritischen Abschnitt innerhalb des durch
+-+ * geschweifte Klammern markierten Bereichs.
+-+
+-+ * Um ein periodisches Umschalten der Tasks zu erreichen, ohne das diese von sich aus Thread::yield aufrufen, wird der
+-+ * Hardware-Timer der x86-Architektur verwendet. Dieser Programmable Interval Timer (\ref PIT) erzeugt konfigurierbar die
+-+ * periodisch Interrupts.
+-+ 
+-+ * Die Klasse \ref Watch behandelt diese Interrupts indem sie die Scheduler Methode \ref Scheduler::preempt aufruft.
+-+
+-+ * \subsection task4_b_steps Vorgeschlagenes Vorgehen zur Lösung von Teil B
+-+ *   \li Implementieren Sie die Methoden der Klasse Watch.
+-+ *   \li Evaluieren Sie die Richtigkeit durch periodische Textausgaben.
+-+ *   \li Implementieren Sie den Aufruf von Scheduler::preempt in der Watch::trigger und sichern Sie die Zugriffe auf die Queue.
+-+ *
+-+ **/
+-+
+-diff -rupN -x .git ./include/common/null.h ../aufg4/include/common/null.h
+---- ./include/common/null.h  1970-01-01 01:00:00.000000000 +0100
+-+++ ../aufg4/include/common/null.h 2015-06-08 12:03:12.697726466 +0200
+-@@ -0,0 +1,9 @@
+-+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\
+-+ *                                   Technische Informatik II                                    * 
+-+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+-+ *                                                                                               * 
+-+ *                                           N U L L                                             * 
+-+ *                                                                                               * 
+-+\* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+-+
+-+#define NULL 0
+-diff -rupN -x .git ./include/common/queue.h ../aufg4/include/common/queue.h
+---- ./include/common/queue.h 1970-01-01 01:00:00.000000000 +0100
+-+++ ../aufg4/include/common/queue.h  2015-06-08 12:03:12.698726471 +0200
+-@@ -0,0 +1,36 @@
+-+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\
+-+ *                                   Technische Informatik II                                    * 
+-+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+-+ *                                                                                               * 
+-+ *                                           Q U E U E                                           * 
+-+ *                                                                                               * 
+-+\* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+-+
+-+#ifndef __queue_include__
+-+#define __queue_include__
+-+
+-+class Queue{
+-+  public:
+-+
+-+    class Element{
+-+      private:
+-+        Element* next;
+-+      public:
+-+        Element();
+-+      friend class Queue;
+-+    };
+-+
+-+  private:
+-+    Element* mHead;
+-+    Element* mTail;
+-+
+-+  public:
+-+    Queue();
+-+    void push_back(Element& e);
+-+    Element* pop_front();
+-+    Element* peek_front() const;
+-+    bool remove(Element& e);
+-+    bool empty() const;
+-+};
+-+
+-+#endif
+-diff -rupN -x .git ./include/device/keyboard.h ../aufg4/include/device/keyboard.h
+---- ./include/device/keyboard.h  2015-06-08 12:03:24.071788162 +0200
+-+++ ../aufg4/include/device/keyboard.h 2015-06-08 12:03:12.698726471 +0200
+-@@ -31,6 +31,8 @@
+-  * for the keyboard.
+-  */
+- class Keyboard : public Keyboard_Controller, public InterruptHandler  {
+-+  protected:
+-+    Key last_key;
+-   public:    
+-     /** 
+-      * \~german
+-@@ -65,6 +67,23 @@ class Keyboard : public Keyboard_Control
+-      *
+-      */
+-     virtual void trigger ();
+-+
+-+    /**
+-+     * \~german
+-+     * \brief gibt den zuletzt betätigten Key zurück.
+-+     *
+-+     * Tritt ein Interrupt für die Tastatur auf, wird der Tastendruck abgespeichert.
+-+     * Mit dieser Funktion kann er abgefragt werden.
+-+     *
+-+     * @return Letzter betätigter Key
+-+     *
+-+     * \~english
+-+     * \brief returns last key
+-+     *
+-+     * @return last Key
+-+     *
+-+     */
+-+    Key& get_key();
+- };
+- 
+- #endif
+-diff -rupN -x .git ./include/device/watch.h ../aufg4/include/device/watch.h
+---- ./include/device/watch.h 1970-01-01 01:00:00.000000000 +0100
+-+++ ../aufg4/include/device/watch.h  2015-06-08 12:03:12.699726477 +0200
+-@@ -0,0 +1,54 @@
+-+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\
+-+ *                                   Technische Informatik II                                    * 
+-+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+-+ *                                                                                               * 
+-+ *                                          W A T C H                                            * 
+-+ *                                                                                               * 
+-+\* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+-+
+-+#ifndef __watch_include__
+-+#define __watch_include__
+-+
+-+/* * * * * * * * * * * * * * * * * * * * * * * * *\
+-+#                    INCLUDES                     #
+-+\* * * * * * * * * * * * * * * * * * * * * * * * */
+-+#include "common/interrupthandler.h"
+-+#include "machine/pit.h"
+-+
+-+
+-+/* * * * * * * * * * * * * * * * * * * * * * * * *\
+-+#                    CLASSES                      #
+-+\* * * * * * * * * * * * * * * * * * * * * * * * */
+-+/**
+-+ * \~english
+-+ * \brief Handler for periodic timer interrupts
+-+ * 
+-+ * This class is a subclass of Gate and implements the interrupt routine used 
+-+ * for the clock.
+-+ */
+-+class Watch : public PIT, public InterruptHandler {
+-+public:
+-+  /**
+-+   * \~english
+-+   * \brief Enable the clock interrupt and its handling
+-+   *
+-+   * \param us interval between interrupts caused by the time-interrupt in 
+-+   *           microsecounds
+-+   *
+-+   * Method windup() is used to enable the clock interrupt. After calling 
+-+   * windup() the clock interrupt is triggered in the defined interval.
+-+   */
+-+  void windup(unsigned int us);
+-+
+-+  /**
+-+   * \~english
+-+   * \brief Handling method of the clock interrupt
+-+   *
+-+   * Handles incoming clock interrupts. Issues a preemtion of the currently
+-+   * running thread and schedules the next one.
+-+   *
+-+   **/
+-+  virtual void trigger();
+-+};
+-+
+-+#endif
+-diff -rupN -x .git ./include/locking/interruptLock.h ../aufg4/include/locking/interruptLock.h
+---- ./include/locking/interruptLock.h  1970-01-01 01:00:00.000000000 +0100
+-+++ ../aufg4/include/locking/interruptLock.h 2015-06-08 12:03:12.699726477 +0200
+-@@ -0,0 +1,72 @@
+-+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\
+-+ *                                   Technische Informatik II                                    * 
+-+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+-+ *                                                                                               * 
+-+ *                                   I N T E R R U P T - L O C K                                 * 
+-+ *                                                                                               * 
+-+\* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+-+
+-+#ifndef __interrupt_lock_header__
+-+#define __interrupt_lock_header__
+-+
+-+/* * * * * * * * * * * * * * * * * * * * * * * * *\
+-+#                    INCLUDES                     #
+-+\* * * * * * * * * * * * * * * * * * * * * * * * */
+-+#include "locking/lock.h"
+-+
+-+extern "C" void exception(unsigned short, void**);
+-+
+-+/* * * * * * * * * * * * * * * * * * * * * * * * *\
+-+#                    CLASSES                      #
+-+\* * * * * * * * * * * * * * * * * * * * * * * * */
+-+
+-+/**
+-+ * \~english
+-+ * \brief Global interrupt lock
+-+ *
+-+ * This class represent a global interrupt lock to synchronize critical sections. It disables all interrupts on creation until it is destroyed or the asymmetricUnlock function is called. The asymmetricUnlock function is a bypass for specific situations in which a created lock will never be destroyed because the scope it was defined in never ends. Therefore this method may only be called by the kickoff function of Thread.
+-+ **/
+-+class InterruptLock : public Lock
+-+{
+-+    private:
+-+        /**
+-+         * \~english
+-+         * \brief Interrupt state on entry
+-+         *
+-+         * The original state on lock entry needs to be saved to restore it on
+-+         * destruction of the lock.
+-+         *
+-+         **/
+-+        bool interruptState;
+-+
+-+        /** \brief enter an interrupt context **/
+-+        void enter();
+-+
+-+        /** \brief leave an interrupt context **/
+-+        void leave();
+-+            
+-+    public:
+-+        /** \brief Unlock and destroy **/
+-+        ~InterruptLock();
+-+
+-+        /**
+-+         * \~english
+-+         * \brief Locks the execution of interrupts
+-+         *
+-+         * This method disables the handling of interrupts. The current interrupt activation state is saved and restored
+-+         * on unlock.
+-+         **/
+-+        virtual void lock();
+-+
+-+        /**
+-+         * \~english
+-+         * \brief %Unlock interrupt handling globally
+-+         *
+-+         * This method restores the previous interrupt handling state before this Lock was locked.
+-+         **/
+-+        virtual void unlock();
+-+
+-+        friend void exception(unsigned short,void**);
+-+};
+-+
+-+#endif
+-diff -rupN -x .git ./include/locking/lock.h ../aufg4/include/locking/lock.h
+---- ./include/locking/lock.h 1970-01-01 01:00:00.000000000 +0100
+-+++ ../aufg4/include/locking/lock.h  2015-06-08 12:03:12.699726477 +0200
+-@@ -0,0 +1,26 @@
+-+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\
+-+ *                                   Technische Informatik II                                    * 
+-+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+-+ *                                                                                               * 
+-+ *                                          L O C K                                              * 
+-+ *                                                                                               * 
+-+\* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+-+
+-+#ifndef __lock_header__
+-+#define __lock_header__
+-+
+-+/* * * * * * * * * * * * * * * * * * * * * * * * *\
+-+#                    CLASSES                      #
+-+\* * * * * * * * * * * * * * * * * * * * * * * * */
+-+
+-+class Lock{
+-+  protected:
+-+    bool state;
+-+  public:
+-+    Lock() : state(false){}
+-+    virtual void lock() = 0;
+-+    virtual void unlock() = 0;
+-+    bool locked(){return state;};
+-+};
+-+
+-+#endif
+-diff -rupN -x .git ./include/locking/scopedLock.h ../aufg4/include/locking/scopedLock.h
+---- ./include/locking/scopedLock.h 1970-01-01 01:00:00.000000000 +0100
+-+++ ../aufg4/include/locking/scopedLock.h  2015-06-08 12:03:12.699726477 +0200
+-@@ -0,0 +1,47 @@
+-+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\
+-+ *                                 Technische Informatik II                                      *
+-+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+-+ *                                                                                               *
+-+ *                                 S C O P E D - L O C K                                         *
+-+ *                                                                                               *
+-+\* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+-+
+-+#ifndef __scoped_lock_include__
+-+#define __scoped_lock_include__
+-+
+-+#include "locking/lock.h"
+-+
+-+/** \~german
+-+ *
+-+ * \~english
+-+ * \brief Scoped lock
+-+ *
+-+ * This lock interface locks the supplied lock on creation and unlocks it, when the interface is destroyed.
+-+ */
+-+class ScopedLock {
+-+  private:
+-+    Lock& lock;
+-+    bool nested;
+-+  public: 
+-+    /** \~german
+-+     *  \~english
+-+     *  \brief Constructor locking the supplied lock
+-+     **/
+-+    ScopedLock(Lock& lock) : lock(lock), nested(lock.locked()){
+-+      if(!nested) {
+-+        lock.lock();
+-+      }
+-+    }
+-+    
+-+    /** \~german
+-+     *  \~english
+-+     *  \brief Desctructor unlocking the registered lock
+-+     **/
+-+    ~ScopedLock(){
+-+      if(!nested) {
+-+        lock.unlock();
+-+      }
+-+    }
+-+};
+-+
+-+#endif
+-diff -rupN -x .git ./include/machine/context.h ../aufg4/include/machine/context.h
+---- ./include/machine/context.h  1970-01-01 01:00:00.000000000 +0100
+-+++ ../aufg4/include/machine/context.h 2015-06-08 12:03:12.699726477 +0200
+-@@ -0,0 +1,72 @@
+-+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\
+-+ *                                 Technische Informatik II                                      *
+-+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+-+ *                                                                                               *
+-+ *                                       C O N T E X T                                           *
+-+ *                                                                                               *
+-+\* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+-+
+-+#ifndef __context_include__
+-+#define __context_include__
+-+
+-+class Thread;
+-+
+-+/* * * * * * * * * * * * * * * * * * * * * * * * *\
+-+#                    CLASSES                      #
+-+\* * * * * * * * * * * * * * * * * * * * * * * * */
+-+
+-+/** \brief Storage for current context of thread
+-+ *
+-+ *  This class contains all information needed to represent a thread of execution.
+-+ *  It may be used to stop, switch and continue currently running threads.
+-+ *
+-+ **/
+-+class Context{
+-+  private:
+-+    /** \brief Definition of a storage type able to hold CPU register contents. **/
+-+    typedef void* Register;
+-+    
+-+    /** \brief Index enumeration mapping registers to indices of the registers array **/
+-+    enum RegisterIndices{
+-+      ebx = 0, /**< General purpose register **/
+-+      esi = 1, /**< General purpose register **/
+-+      edi = 2, /**< General purpose register **/
+-+      esp = 3, /**< Stack pointer **/
+-+      ebp = 4  /**< Base pointer **/
+-+    };
+-+
+-+    /** \brief the non-volatile x86 base registers **/
+-+    Register registers[5];
+-+
+-+    /** \brief Local 1K stack of this thread. **/
+-+    Register stack[1024];
+-+
+-+  public:
+-+    /** \brief Context creation
+-+     *
+-+     *  On construction of the context the CPU registers will be filled with appropriate information, to start the
+-+     *  thread on its first scheduling
+-+     *
+-+     *  \param thread pointer to thread object
+-+     *
+-+     **/
+-+    Context(Thread* thread);
+-+
+-+    /** \brief swaps the currently running context with the specified one
+-+     * 
+-+     *  During the swap process the registers of the currently active context will be updated with the actualk values
+-+     *  contained in the CPU.
+-+     *
+-+     *  \param next the next context to be run by the CPU
+-+     */
+-+    void swap(Context& next);
+-+
+-+    /** \brief replaces the currently running context with this one
+-+     * 
+-+     *  This method does not preserve the old context. Therefore the current execution state of the originating thread
+-+     *  is lost.
+-+     **/
+-+    void set();
+-+};
+-+
+-+#endif
+-diff -rupN -x .git ./include/machine/cpu.h ../aufg4/include/machine/cpu.h
+---- ./include/machine/cpu.h  2015-06-08 12:03:24.071788162 +0200
+-+++ ../aufg4/include/machine/cpu.h 2015-06-08 12:03:12.699726477 +0200
+-@@ -29,7 +29,7 @@ class CPU {
+-     
+-     /** \~german
+-      *  \~english
+--     *  \brief globally dissable interrupts and return previous state
+-+     *  \brief globally disable interrupts and return previous state
+-      *  \return previous interrupt state
+-      **/
+-     inline bool disable_int () {
+-diff -rupN -x .git ./include/machine/pit.h ../aufg4/include/machine/pit.h
+---- ./include/machine/pit.h  1970-01-01 01:00:00.000000000 +0100
+-+++ ../aufg4/include/machine/pit.h 2015-06-08 12:03:12.700726482 +0200
+-@@ -0,0 +1,110 @@
+-+/*---------------------------------------------------------------------------*
+-+ * Operating Systems I                                                       *
+-+ *---------------------------------------------------------------------------*
+-+ *                                                                           *
+-+ *                                  P I T                                    *
+-+ *                                                                           *
+-+ *---------------------------------------------------------------------------*/
+-+
+-+#ifndef __pit_include__
+-+#define __pit_include__
+-+
+-+#include "stdint.h"
+-+#include "machine/io_port.h"
+-+
+-+/** 
+-+ * Class PIT implements the 'Programmable Interval Timer' used to programm the
+-+ * timer interrupt.
+-+ */
+-+class PIT { 
+-+private:
+-+  enum Parameters
+-+  {
+-+    timestep = 838,         /**< time of one tick in nanoseconds **/
+-+    maxUS = 0xFFFFUL*timestep/1000  /**< max timer interval in microseconds **/
+-+  };
+-+
+-+  enum Ports{
+-+    counter0Port=0x40,
+-+    counter1Port=0x41,
+-+    counter2Port=0x42,
+-+    ctrl0Port=0x43,
+-+    counter3Port=0x48,
+-+    counter4Port=0x49,
+-+    counter5Port=0x4A,
+-+    ctrl1Port=0x4B
+-+  };
+-+
+-+  enum CountTypes
+-+  {
+-+    binary,
+-+    bcd
+-+  };
+-+
+-+  enum CountModes
+-+  {
+-+    intOnTerminal,
+-+    hwOneShot,
+-+    rateGen,
+-+    squareWave,
+-+    swStrobe,
+-+    hwStrobe
+-+  };
+-+
+-+  enum RWTypes
+-+  {
+-+    latch,
+-+    lowOnly,
+-+    highOnly,
+-+    lowThenHigh
+-+  };
+-+
+-+  enum Counters
+-+  {
+-+    counter0,
+-+    counter1,
+-+    counter2
+-+  };
+-+
+-+  union PitControlByte
+-+  {
+-+    struct 
+-+    {
+-+      CountTypes countType : 1;
+-+      CountModes mode : 3;
+-+      RWTypes rwType : 2;
+-+      Counters counter : 2;
+-+    };
+-+    uint8_t ctrlByte;
+-+  } pcb;
+-+
+-+  unsigned short currIntervall;
+-+
+-+public:
+-+  /**
+-+   * Default constructor initialiseing the timer interval.
+-+   */
+-+  PIT();
+-+
+-+  /**
+-+   * Default constructor initialiseing the timer interval.
+-+   */
+-+  virtual ~PIT();
+-+  
+-+  /**
+-+   * Method 'interval()' returns the timer interval of the PIT.
+-+   *
+-+   * @return the timer interval of the PIT as int value.
+-+   */
+-+  unsigned short interval ();
+-+  
+-+  /**
+-+   * Method 'interval()' implements the programming of the timer interrupt using
+-+   * IO_Ports.
+-+   * 
+-+   * @param us timer interval (int)
+-+   */
+-+  void interval(unsigned short us); 
+-+};
+-+
+-+#endif
+-diff -rupN -x .git ./include/object/cpu.h ../aufg4/include/object/cpu.h
+---- ./include/object/cpu.h 2015-06-08 12:03:24.072788168 +0200
+-+++ ../aufg4/include/object/cpu.h  2015-06-08 12:03:12.700726482 +0200
+-@@ -2,7 +2,7 @@
+-  *                                 Technische Informatik II                                      *
+-  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+-  *                                                                                               *
+-- *                                        object/cpu                                             *
+-+ *                                     C P U - O B J E C T                                       *
+-  *                                                                                               *
+- \* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+- 
+-diff -rupN -x .git ./include/object/imanager.h ../aufg4/include/object/imanager.h
+---- ./include/object/imanager.h  2015-06-08 12:03:24.072788168 +0200
+-+++ ../aufg4/include/object/imanager.h 2015-06-08 12:03:12.700726482 +0200
+-@@ -2,8 +2,14 @@
+-  *                                   Technische Informatik II                                    *
+-  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+-  *                                                                                               *
+-- *                                        object/interruptmanager                                *
+-+ *                                 I M A N A G E R - O B J E C T                                 *
+-  *                                                                                               *
+- \* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+-+
+-+#ifndef __imanager_object_header__
+-+#define __imanager_object_header__
+-+
+- #include "device/interruptmanager.h"
+- extern InterruptManager iManager;
+-+
+-+#endif
+-diff -rupN -x .git ./include/object/keyboard.h ../aufg4/include/object/keyboard.h
+---- ./include/object/keyboard.h  2015-06-08 12:03:24.072788168 +0200
+-+++ ../aufg4/include/object/keyboard.h 2015-06-08 12:03:12.701726488 +0200
+-@@ -2,8 +2,14 @@
+-  *                                   Technische Informatik II                                    * 
+-  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+-  *                                                                                               * 
+-- *                                        object/keyboard                                        * 
+-+ *                                 K E Y B O A R D - O B J E C T                                 * 
+-  *                                                                                               * 
+- \* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+-+
+-+#ifndef __keyboard_object_header__
+-+#define __keyboard_object_header__
+-+
+- #include "device/keyboard.h"
+- extern Keyboard keyboard;
+-+
+-+#endif
+-diff -rupN -x .git ./include/object/kout.h ../aufg4/include/object/kout.h
+---- ./include/object/kout.h  2015-06-08 12:03:24.072788168 +0200
+-+++ ../aufg4/include/object/kout.h 2015-06-08 12:03:12.701726488 +0200
+-@@ -2,7 +2,7 @@
+-  *                                 Technische Informatik II                                      *
+-  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+-  *                                                                                               *
+-- *                                       object/kout                                             *
+-+ *                                  K O U T _ O B J E C T                                        *
+-  *                                                                                               *
+- \* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+- 
+-diff -rupN -x .git ./include/object/lock.h ../aufg4/include/object/lock.h
+---- ./include/object/lock.h  1970-01-01 01:00:00.000000000 +0100
+-+++ ../aufg4/include/object/lock.h 2015-06-08 12:03:12.701726488 +0200
+-@@ -0,0 +1,15 @@
+-+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\
+-+ *                                   Technische Informatik II                                    * 
+-+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+-+ *                                                                                               * 
+-+ *                                 L O C K - O B J E C T                                         * 
+-+ *                                                                                               * 
+-+\* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+-+
+-+#ifndef __keyboard_object_header__
+-+#define __keyboard_object_header__
+-+
+-+#include "locking/interruptLock.h"
+-+extern InterruptLock lock;
+-+
+-+#endif
+-diff -rupN -x .git ./include/object/scheduler.h ../aufg4/include/object/scheduler.h
+---- ./include/object/scheduler.h 1970-01-01 01:00:00.000000000 +0100
+-+++ ../aufg4/include/object/scheduler.h  2015-06-08 12:03:12.701726488 +0200
+-@@ -0,0 +1,16 @@
+-+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\
+-+ *                                 Technische Informatik II                                      *
+-+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+-+ *                                                                                               *
+-+ *                              S C H E D U L E R - O B J E C T                                  *
+-+ *                                                                                               *
+-+\* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+-+
+-+#ifndef __scheduler_object_header
+-+#define __scheduler_object_header
+-+
+-+#include "thread/scheduler.h"
+-+
+-+extern Scheduler scheduler;
+-+
+-+#endif
+-diff -rupN -x .git ./include/thread/dispatch.h ../aufg4/include/thread/dispatch.h
+---- ./include/thread/dispatch.h  1970-01-01 01:00:00.000000000 +0100
+-+++ ../aufg4/include/thread/dispatch.h 2015-06-08 12:03:12.701726488 +0200
+-@@ -0,0 +1,75 @@
+-+/*---------------------------------------------------------------------------*
+-+ * Operating Systems I                                                       *
+-+ *---------------------------------------------------------------------------*
+-+ *                                                                           *
+-+ *                          D I S P A T C H E R                              *
+-+ *                                                                           *
+-+ *---------------------------------------------------------------------------*/
+-+
+-+#ifndef __dispatch_include__
+-+#define __dispatch_include__
+-+
+-+/* * * * * * * * * * * * * * * * * * * * * * * * *\
+-+#                    INCLUDES                     #
+-+\* * * * * * * * * * * * * * * * * * * * * * * * */
+-+
+-+#include "thread/thread.h"
+-+
+-+/* * * * * * * * * * * * * * * * * * * * * * * * *\
+-+#                    CLASSES                      #
+-+\* * * * * * * * * * * * * * * * * * * * * * * * */
+-+
+-+/** \brief Managing currently active threads.
+-+ *
+-+ * The dispatcher changes the currently active thread if the system. It keeps
+-+ * track of all effectively running therads and management the transition of
+-+ * one thread to another. In the current setup only single CPU systems are
+-+ * supported.
+-+ *
+-+ **/
+-+class Dispatcher {
+-+private:
+-+  /** 
+-+   * \~english
+-+   * \brief The currently active thread
+-+   */
+-+   Thread* current;
+-+  
+-+
+-+public:
+-+  /** 
+-+   * \~english
+-+   * \brief Default constructor.
+-+   */
+-+  Dispatcher() : current(0){}
+-+
+-+  /** \brief Starts the scheduling
+-+   *
+-+   * The scheduling is started through a transition to the first thread
+-+   * available in the system. This transition is one way. The original context
+-+   * is not saved and can therefore never be restored.
+-+   *
+-+   * \param first Reference of the first thread scheduled in the system.
+-+   */
+-+  void start(Thread& first);
+-+
+-+  /** \brief  Switch to another thread
+-+   *
+-+   * The new thread is specified as the parameter of the call. During the
+-+   * transition the old thread context is saved and the new thread context is
+-+   * installed on the CPU.
+-+   *
+-+   * \param next Reference to the new active thread.
+-+   */
+-+  void dispatch(Thread& next);
+-+
+-+  /** \brief Returns the currently active thread.
+-+   *
+-+   * \return pointer to the currently active thread.
+-+   */
+-+  Thread* active() const{
+-+    return current;
+-+  }
+-+};
+-+
+-+#endif
+-diff -rupN -x .git ./include/thread/scheduler.h ../aufg4/include/thread/scheduler.h
+---- ./include/thread/scheduler.h 1970-01-01 01:00:00.000000000 +0100
+-+++ ../aufg4/include/thread/scheduler.h  2015-06-08 12:03:12.701726488 +0200
+-@@ -0,0 +1,88 @@
+-+/*---------------------------------------------------------------------------*
+-+ * Operating Systems I                                                       *
+-+ *---------------------------------------------------------------------------*
+-+ *                                                                           *
+-+ *                          S C H E D U L E R                                *
+-+ *                                                                           *
+-+ *---------------------------------------------------------------------------*/
+-+
+-+#ifndef __schedule_include__
+-+#define __schedule_include__
+-+
+-+#include "thread/dispatch.h"
+-+#include "common/queue.h"
+-+#include "device/watch.h"
+-+
+-+class Thread;
+-+
+-+/**
+-+ * \~english
+-+ * \brief Basic Scheduler
+-+ *  
+-+ * This class represent a simple FIFO-Scheduler. It holds a list of the
+-+ * currently available threads. Through the \ref Scheduler::yield method it
+-+ * can issue a context switch to another ready thread. The resulting context
+-+ * switch may also switch to the same thread if the ready list is empty.
+-+ *
+-+ **/
+-+class Scheduler : protected Dispatcher {
+-+private:
+-+  /** \brief Queue of threads that are ready to be processed **/
+-+    Queue threads;
+-+
+-+  /** \brief flag set upon start of scheduler **/
+-+    bool started;
+-+
+-+
+-+public:
+-+  /** \brief Default Constructor clearing started flag **/
+-+  Scheduler();
+-+
+-+  /** \brief Default Destructor clearing started flag **/
+-+  ~Scheduler();
+-+
+-+  /** \brief Start the scheduling by starting the first thread
+-+   **/ 
+-+  void start();
+-+  
+-+  /** \brief Insert the specified thread into the queue
+-+   *
+-+   * of threads that are ready to be processed.
+-+   *
+-+   * @param that reference to the thread to be inserted
+-+   **/
+-+  void insert(Thread& that);
+-+
+-+  /** \brief Remove the currently active thread from the queue
+-+   *
+-+   * of thread and resumes with the next thread. If there are no
+-+   * more threads the scheduler starts an idle loop.
+-+   **/
+-+  void exit();
+-+
+-+  /** \brief Remove the specified thread from the queue of threads, killing the execution of this thread.
+-+   *
+-+   * @param that reference of the thread to be killed.
+-+   * @returns whether operation was successful
+-+   */
+-+  bool kill(Thread& that);
+-+
+-+  /** \brief Yield to another ready thread **/
+-+  void yield();
+-+private:
+-+  /** \brief helper function stop the execution of the current thread and switch to next one
+-+   *
+-+   *  This helper function unifies the scheduling of the next thread
+-+   **/
+-+  void next();
+-+
+-+  /** \brief helper function to yield unguarded to another thread
+-+   *
+-+   *  This helper function is used by watch to preempt the currently running thread.
+-+   **/
+-+  void preempt();
+-+
+-+  friend void Watch::trigger();
+-+};
+-+
+-+#endif
+-diff -rupN -x .git ./include/thread/thread.h ../aufg4/include/thread/thread.h
+---- ./include/thread/thread.h  1970-01-01 01:00:00.000000000 +0100
+-+++ ../aufg4/include/thread/thread.h 2015-06-08 12:03:12.701726488 +0200
+-@@ -0,0 +1,94 @@
+-+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\
+-+ *                                   Technische Informatik II                                    * 
+-+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+-+ *                                                                                               * 
+-+ *                                          T H R E A D                                          * 
+-+ *                                                                                               * 
+-+\* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+-+
+-+#ifndef __thread_include__
+-+#define __thread_include__
+-+
+-+/* * * * * * * * * * * * * * * * * * * * * * * * *\
+-+#                    INCLUDES                     #
+-+\* * * * * * * * * * * * * * * * * * * * * * * * */
+-+
+-+#include "machine/context.h"
+-+#include "common/queue.h"
+-+
+-+/* * * * * * * * * * * * * * * * * * * * * * * * *\
+-+#                    CLASSES                      #
+-+\* * * * * * * * * * * * * * * * * * * * * * * * */
+-+
+-+/**
+-+ *  \~english
+-+ *  \brief Basic multitasking entity.  
+-+ *
+-+ *  Threads are the entities of scheduling. They are either part of the queue
+-+ *  of threads ready for execution, blocked by a specific semaphore or currently
+-+ *  running. This class defines the needed data structure to represent the
+-+ *  context of a single thread(thread specific stack and thread control block).
+-+ *  Additionally a C function is defined to help initiating the thread specific
+-+ *  action.
+-+ *
+-+ **/
+-+class Thread : public Queue::Element{
+-+
+-+  private:
+-+    /** \brief %Thread context for the specific architecture. **/
+-+    Context context;
+-+
+-+    /** \brief Kickoff function to initiate thread action.
+-+     * 
+-+     * \param thread the thread to be started
+-+     **/
+-+    static void kickoff(Thread* thread);
+-+
+-+  public:
+-+  /**
+-+   * \~english
+-+   * \brief Default constructor.
+-+   *
+-+   * Initializes the thread control block.
+-+   **/
+-+  Thread();
+-+
+-+  /**
+-+   * \~english
+-+   * \brief Destructor.
+-+   *
+-+   * Terminates the execution of this thread.
+-+   **/
+-+  ~Thread();
+-+
+-+  /**
+-+   * \~english
+-+   * \brief Yield execution to another ready thread.
+-+   *
+-+   * This method forwards the call to the global scheduler.
+-+   **/
+-+  void yield();
+-+
+-+  /**
+-+   * \~english
+-+   * \brief Terminate execution of this thread.
+-+   *
+-+   * This method forwards the call to the global scheduler
+-+   **/
+-+  void exit();
+-+
+-+  /**
+-+   * \~english
+-+   * \brief %Thread specific task method.
+-+   *
+-+   * This method needs to be overwritten by an application inheriting from Thread.
+-+   **/
+-+  virtual void action() =0;
+-+
+-+  /** \brief To enable switching of contexts **/
+-+  friend class Dispatcher;
+-+  /** \brief To enable access to kickoff **/
+-+  friend class Context;
+-+};
+-+
+-+#endif
+-diff -rupN -x .git ./include/user/appl.h ../aufg4/include/user/appl.h
+---- ./include/user/appl.h  2015-06-08 12:03:24.072788168 +0200
+-+++ ../aufg4/include/user/appl.h 2015-06-08 12:03:12.701726488 +0200
+-@@ -9,14 +9,15 @@
+- #ifndef __application_include__
+- #define __application_include__
+- 
+-+#include "thread/thread.h"
+-+
+- /** \brief Basis of OOStuBs-Applications
+-  *
+-  * This class defines the only application used by oo-StuBS. Every application
+-  * class is derived from this class.
+-  */        
+--class Application {
+-+class Application : public Thread{
+-   public:
+--    
+-     /** \brief Start the application
+-      *
+-      * This method must be overwritten by the derived class.
+-diff -rupN -x .git ./include/user/task1.h ../aufg4/include/user/task1.h
+---- ./include/user/task1.h 2015-06-08 12:03:24.072788168 +0200
+-+++ ../aufg4/include/user/task1.h  2015-06-08 12:03:12.701726488 +0200
+-@@ -125,19 +125,19 @@ class Task1 : public Application{
+-     /** \brief test the functionality of the Keyboard_Controller object **/
+-     void testKeyboard();
+-     
+--  public:
+--    /** \brief Constructor
+--     *
+--     * \param magic bootloader provided magic value
+--     * \param mbi pointer to multiboot info structure
+--     **/
+--    Task1(uint32_t magic, const ::Multiboot_Info* mbi);
+--    
+-+  public:  
+-     /** \brief parse and print multiboot information
+-      *
+-      * test also the implementation of CGA_Stream and Keyboard_Controller
+-      **/
+-     virtual void action();
+--};
+-+
+-+    /** \brief sets pointer to multiboot information and magic constant
+-+     *
+-+     * \param mbi the pointer to the multiboot information structure
+-+     * \param magic the magic constant passed by a multiboot compliant loader
+-+     **/
+-+    void setup(uint32_t magic, const ::Multiboot_Info* mbi);
+-+};  
+- 
+- #endif
+-diff -rupN -x .git ./include/user/task4.h ../aufg4/include/user/task4.h
+---- ./include/user/task4.h 1970-01-01 01:00:00.000000000 +0100
+-+++ ../aufg4/include/user/task4.h  2015-06-08 12:03:12.702726493 +0200
+-@@ -0,0 +1,107 @@
+-+#include "user/appl.h"
+-+
+-+/** \brief Fourth test application
+-+ *
+-+ * Showing the functionality of coroutine scheduling, by starting 3 coroutine
+-+ * based applications.
+-+ **/
+-+class Task4 : public Application{
+-+  private:
+-+
+-+enum Constants{
+-+  rotCursorX=79,
+-+  rotCursorY=0,
+-+  counter1X=10,
+-+  counter1Y=10,
+-+  counter2X=10,
+-+  counter2Y=15,
+-+};
+-+    bool coop;
+-+
+-+/** \brief %Rotating symbol application
+-+ *
+-+ * This coroutine creates a rotating symbol in the upper left corner of the
+-+ * screen, to show "quasi"-parallel execution of coroutines
+-+ **/
+-+class RotCursor : public Application
+-+{
+-+  private:
+-+    /**\brief internal state to save current symbol **/
+-+    unsigned char i;
+-+    unsigned short x, y;
+-+        bool coop;
+-+        
+-+        void enableCoop(){coop=true;}
+-+  public:
+-+    /** \brief Default constructor
+-+     *
+-+     * Setting the start symbol
+-+     **/
+-+    RotCursor(unsigned short x, unsigned short y);
+-+
+-+    /** \brief start outputting the symbol
+-+     *
+-+     * This method resumes after each interation
+-+     **/
+-+    virtual void action();
+-+    friend class Task4;
+-+};
+-+
+-+/** \brief Counting application
+-+ *
+-+ * This coroutine counts a value on a fixed position on the screen
+-+ **/
+-+class Counter : public Application
+-+{
+-+  private:
+-+    /** \brief current counter value **/
+-+    unsigned int i;
+-+    unsigned short x, y;
+-+        bool coop;
+-+
+-+        void enableCoop(){coop=true;}
+-+  public:
+-+    /** \brief Default constructor
+-+     *
+-+     * Setting the counter to 0
+-+     **/
+-+    Counter(unsigned short x, unsigned short y);
+-+
+-+    /** \brief start outputting and incrementing the counter value
+-+     *
+-+     * This method resumes after each interation
+-+     **/
+-+    virtual void action();
+-+
+-+   friend class Task4;
+-+};
+-+
+-+    /** \brief Application for a rotating symbol **/
+-+    RotCursor rotCursor;
+-+    /** \brief Application for a printed out counter **/
+-+    Counter counter1;
+-+    /** \brief Application for a printed out counter **/
+-+    Counter counter2;
+-+
+-+  public:
+-+    /** \brief Default Constructor 
+-+     *
+-+     * Setting the applications up
+-+     **/
+-+    Task4();
+-+
+-+    /** \brief Default Destructor 
+-+     *
+-+     * Logging the end of the setup process
+-+     **/
+-+    ~Task4();
+-+
+-+    /** \brief start operation
+-+     *
+-+     * registers the applications with the scheduler and exit afterwards
+-+     **/
+-+    virtual void action();
+-+
+-+    /** \brief switch sub tasks to cooperative scheduling **/
+-+    void enableCoop();
+-+};
+-diff -rupN -x .git ./misc/linux/config.mk ../aufg4/misc/linux/config.mk
+---- ./misc/linux/config.mk 2015-06-08 12:03:24.073788173 +0200
+-+++ ../aufg4/misc/linux/config.mk  2015-06-08 12:03:12.702726493 +0200
+-@@ -14,6 +14,6 @@ CXXFLAGS+=${CFLAGS} -fno-rtti -nostdinc+
+- LDFLAGS=-e entry -T misc/sections
+- 
+- OBJDUMPFLAGS=-Cxd
+--EMUFLAGS+=-no-kvm -net none -vga std -kernel
+--DEBUGFLAGS+=-s -S
+-+EMUFLAGS+=-no-kvm -net none -vga std -serial stdio
+-+EMUDEBUG+=-no-kvm -net none -vga std -serial file:"log" -S -s -daemonize
+- GDBFLAGS+=-x misc/gdb.script
+-diff -rupN -x .git ./misc/rules.mk ../aufg4/misc/rules.mk
+---- ./misc/rules.mk  2015-06-08 12:03:24.074788179 +0200
+-+++ ../aufg4/misc/rules.mk 2015-06-08 12:03:12.703726499 +0200
+-@@ -16,7 +16,7 @@ SED:=@${SED}
+- OBJDUMP:=@${OBJDUMP}
+- 
+- BOOT_OBJECT      := ${BUILD}/boot.o
+--SOURCES          := $(wildcard ${SRC}/*/*.cc ${SRC}/*.cc ${SRC}/*/*.S)
+-+SOURCES          := $(wildcard ${SRC}/*/*.c ${SRC}/*/*.cc ${SRC}/*.cc ${SRC}/*/*.S)
+- HEADERS          := $(filter %.h, $(wildcard ${INCLUDE}/*/*.h))
+- DOXS             := $(wildcard ${DOC}/*.dox)
+- SYSTEM_OBJECTS   := $(filter-out ${BOOT_OBJECT}, $(addprefix ${BUILD}/,$(filter-out ${OBJECT_IGNORE}, $(addsuffix .o,$(basename $(notdir ${SOURCES}))))))
+-@@ -30,11 +30,12 @@ LIBS             := $(addprefix -l,${LIB
+- ASMFLAGS         := $(foreach VAR, ${ASMFLAGS}, -Wa,${VAR})
+- BUILD_GARBAGE    := $(wildcard *~ *.sw?) ${BIN} ${BUILD} $(wildcard *.dump)
+- DOC_GARBAGE      := ${DOC}/html ${DOC}/log
+--GARBAGE          := $(BUILD_GARBAGE) $(DOC_GARBAGE)
+-+GARBAGE          := $(BUILD_GARBAGE) $(DOC_GARBAGE) log
+- 
+- .PHONY: all clean run debug doc dump cleanDoc cleanBuild
+- 
+--vpath %.cc ${SRC} ${SRC}/machine ${SRC}/user ${SRC}/common ${SRC}/device ${SRC}/boot
+-+vpath %.cc ${SRC} ${SRC}/machine ${SRC}/user ${SRC}/common ${SRC}/device ${SRC}/boot ${SRC}/thread ${SRC}/locking
+-+vpath %.c ${SRC}/boot
+- vpath %.S  ${SRC}/boot
+- 
+- all: ${TARGET}
+diff -rupN -x .git ./src/boot/boot.S ../aufg4/src/boot/boot.S
+--- ./src/boot/boot.S 2015-06-08 12:03:24.075788184 +0200
++++ ../aufg4/src/boot/boot.S  2015-06-08 12:03:12.704726504 +0200
+@@ -111,8 +111,6 @@ initFPU:                    /* setup FPU for 486 a
+ 
+ setupObj:                /* Call the constructors of global objects */
+  call constructObjects
+- /*ljmpl $0x04, $callKernel*/ /* only test code: generate GP */
+- /*int $2*/            /* only test code: generate pseudo Interrupt 2, just normal interrupt, no exception generation */
+ 
+ callKernel:              /* Call the C/C++ main function of the operating system */
+  call kernel
+diff -rupN -x .git ./src/boot/memset.cc ../aufg4/src/boot/memset.cc
+--- ./src/boot/memset.cc  1970-01-01 01:00:00.000000000 +0100
++++ ../aufg4/src/boot/memset.cc 2015-06-08 12:03:12.704726504 +0200
+@@ -0,0 +1,6 @@
++#include <stddef.h>
++
++extern "C" void memset(void *s, int c, size_t n){
++  for(size_t i=0;i<n;i++)
++    reinterpret_cast<char*>(s)[i]=c;
++}
+diff -rupN -x .git ./src/common/queue.cc ../aufg4/src/common/queue.cc
+--- ./src/common/queue.cc 1970-01-01 01:00:00.000000000 +0100
++++ ../aufg4/src/common/queue.cc  2015-06-08 12:03:12.705726509 +0200
+@@ -0,0 +1,51 @@
++#include "common/queue.h"
++#include "common/null.h"
++
++Queue::Element::Element() : next(NULL){}
++
++Queue::Queue() : mHead(NULL), mTail(NULL){}
++
++void Queue::push_back(Element& e){
++  if(!mHead){
++    mHead=&e;
++    mTail=&e;
++  }else{
++    mTail->next=&e;
++    mTail=&e;
++  }
++}
++
++Queue::Element* Queue::pop_front(){
++  if(!mHead)
++    return NULL;
++  Element* temp=mHead;
++  mHead=temp->next;
++  return temp;
++}
++
++Queue::Element* Queue::peek_front() const{
++  return mHead;
++}
++
++bool Queue::remove(Queue::Element& e){
++  Element* curr=mHead;
++  Element* preCurr=NULL;
++  while(curr){
++    if(curr==&e){
++      if(preCurr){
++        preCurr->next=curr->next;
++      }else{
++        mHead=curr->next;
++      }
++      return true;
++    }else{
++      preCurr=curr;
++      curr=curr->next;
++    }
++  }
++  return false;
++}
++
++bool Queue::empty() const{
++  return !mHead;
++}
+diff -rupN -x .git ./src/device/keyboard.cc ../aufg4/src/device/keyboard.cc
+--- ./src/device/keyboard.cc  2015-06-08 12:03:24.076788189 +0200
++++ ../aufg4/src/device/keyboard.cc 2015-06-08 12:03:12.705726509 +0200
+@@ -25,8 +25,10 @@ void Keyboard::plugin(){
+ void Keyboard::trigger(){
+   // fetch last key
+   Key k=key_hit();
+-
+   if(k.valid()){
++    // save last key
++    this->last_key = k;
++
+     // print key
+     kout.setpos(KEYBOARD_X, KEYBOARD_Y);
+     kout << k.ascii() << " (" << (unsigned int)k.scancode() << ")   ";
+@@ -38,3 +40,7 @@ void Keyboard::trigger(){
+     }
+    }
+ }
++
++Key& Keyboard::get_key() {
++  return this->last_key;
++}
+diff -rupN -x .git ./src/device/watch.cc ../aufg4/src/device/watch.cc
+--- ./src/device/watch.cc 1970-01-01 01:00:00.000000000 +0100
++++ ../aufg4/src/device/watch.cc  2015-06-08 12:03:12.705726509 +0200
+@@ -0,0 +1,27 @@
++/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\
++ *                                 Technische Informatik II                                      *
++ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
++ *                                                                                               *
++ *                                         W A T C H                                             *
++ *                                                                                               *
++\* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
++
++/* * * * * * * * * * * * * * * * * * * * * * * * *\
++#                   INCLUDES                      #
++\* * * * * * * * * * * * * * * * * * * * * * * * */
++
++#include "device/watch.h"
++#include "object/imanager.h"
++#include "object/scheduler.h"
++
++/* * * * * * * * * * * * * * * * * * * * * * * * *\
++#                   METHODS                       #
++\* * * * * * * * * * * * * * * * * * * * * * * * */
++
++void Watch::windup(unsigned int us){
++  // todo
++}
++
++void Watch::trigger(){
++  // todo
++}
+diff -rupN -x .git ./src/locking/interruptLock.cc ../aufg4/src/locking/interruptLock.cc
+--- ./src/locking/interruptLock.cc  1970-01-01 01:00:00.000000000 +0100
++++ ../aufg4/src/locking/interruptLock.cc 2015-06-08 12:03:12.705726509 +0200
+@@ -0,0 +1,37 @@
++#include "locking/interruptLock.h"
++
++#include "object/log.h"
++#include "object/cpu.h"
++
++void InterruptLock::enter(){
++  interruptState=true;
++  state=true;
++}
++
++void InterruptLock::leave(){
++  state=false;
++}
++
++void InterruptLock::lock(){
++    interruptState=cpu.disable_int();
++    if(state){
++        log << "Lock(" << this << "): double lock" << endl;
++    }
++    state=true;
++}
++
++void InterruptLock::unlock(){
++    if(!state){
++        log << "Lock(" << this << "): double unlock" << endl;
++    }
++    state=false;
++    if(interruptState){
++        cpu.enable_int();
++    }
++}
++
++InterruptLock::~InterruptLock(){
++  if(state){
++      unlock();
++  }
++}
+diff -rupN -x .git ./src/machine/context.cc ../aufg4/src/machine/context.cc
+--- ./src/machine/context.cc  1970-01-01 01:00:00.000000000 +0100
++++ ../aufg4/src/machine/context.cc 2015-06-08 12:03:12.706726515 +0200
+@@ -0,0 +1,36 @@
++#include "machine/context.h"
++#include "thread/thread.h"
++
++Context::Context(Thread* thread){
++  Register* tos  = stack+sizeof(stack)/sizeof(Register);
++  tos[-1]        = thread;
++  tos[-3]        = reinterpret_cast<void*>(&Thread::kickoff);
++  registers[esp] = tos-4;
++}
++
++void Context::set(){
++  asm("mov   (%0), %%ebx\n\t"
++      "mov  4(%0), %%esi\n\t"
++      "mov  8(%0), %%edi\n\t"
++      "mov 12(%0), %%esp\n\t"
++      "mov 16(%0), %%ebp\n\t"
++      :
++      : "r"(registers)
++  );
++}
++
++void Context::swap(Context& next){
++  asm("mov %%ebx,   (%0)\n\t"
++      "mov %%esi,  4(%0)\n\t"
++      "mov %%edi,  8(%0)\n\t"
++      "mov %%esp, 12(%0)\n\t"
++      "mov %%ebp, 16(%0)\n\t"
++      "mov   (%1), %%ebx\n\t"
++      "mov  4(%1), %%esi\n\t"
++      "mov  8(%1), %%edi\n\t"
++      "mov 12(%1), %%esp\n\t"
++      "mov 16(%1), %%ebp\n\t"
++      :
++      : "r"(registers), "r"(&next.registers)
++  );
++}
+diff -rupN -x .git ./src/machine/exceptions.cc ../aufg4/src/machine/exceptions.cc
+--- ./src/machine/exceptions.cc 2015-06-08 12:03:24.076788189 +0200
++++ ../aufg4/src/machine/exceptions.cc  2015-06-08 12:03:12.706726515 +0200
+@@ -11,6 +11,7 @@
+ #include "object/imanager.h"
+ #include "object/kout.h"
+ #include "object/cpu.h"
++#include "object/lock.h"
+ 
+ #include <stdint.h>
+ 
+@@ -110,5 +111,7 @@ void exception(unsigned short slot, void
+   if(slot < 32 && slot != 2) {
+     printException(slot, esp);
+   }
++  lock.enter();
+   iManager.handle(slot);
++  lock.leave();
+ }
+diff -rupN -x .git ./src/machine/keyctrl.cc ../aufg4/src/machine/keyctrl.cc
+--- ./src/machine/keyctrl.cc  2015-06-08 12:03:24.077788195 +0200
++++ ../aufg4/src/machine/keyctrl.cc 2015-06-08 12:03:12.706726515 +0200
+@@ -8,7 +8,8 @@
+ 
+ /* INCLUDES */
+ #include "machine/keyctrl.h"
+-#include "locking/intlock.h"
++#include "object/lock.h"
++#include "locking/scopedLock.h"
+ 
+ /* GLOBALE VARIABLS */
+ 
+@@ -203,7 +204,7 @@ Keyboard_Controller::Keyboard_Controller
+ 
+ void Keyboard_Controller::reboot () {
+   int status;
+-  
++
+   // The BIOS has to be told that reset is real and no memory test.
+   *(unsigned short*) 0x472 = 0x1234;
+   
+@@ -236,7 +237,7 @@ void Keyboard_Controller::set_repeat_rat
+   
+   unsigned char status, reply;
+   
+-  IntLock lock;
++  ScopedLock scopedLock(lock);
+   
+   data_port.outb (cmd_set_speed);    // send command to keyboard
+   do { 
+@@ -256,7 +257,7 @@ void Keyboard_Controller::set_led (Leds
+   
+   unsigned char status, reply;
+   
+-  IntLock lock;
++  ScopedLock scopedLock(lock);
+   
+   data_port.outb (cmd_set_led);             // send command to keyboard
+   do { 
+diff -rupN -x .git ./src/machine/pit.cc ../aufg4/src/machine/pit.cc
+--- ./src/machine/pit.cc  1970-01-01 01:00:00.000000000 +0100
++++ ../aufg4/src/machine/pit.cc 2015-06-08 12:03:12.706726515 +0200
+@@ -0,0 +1,41 @@
++/*---------------------------------------------------------------------------*
++ * Operating Systems I                                                       *
++ *---------------------------------------------------------------------------*
++ *                                                                           *
++ *                                  P I T                                    *
++ *                                                                           *
++ *---------------------------------------------------------------------------*/
++
++#include "machine/pit.h"
++
++PIT::PIT(){
++ pcb.countType=binary;
++ pcb.mode=rateGen;
++ pcb.rwType=lowThenHigh;
++ pcb.counter=counter0;
++}
++
++PIT::~PIT(){
++
++}
++
++void PIT::interval(unsigned short us){
++ IO_Port value(counter0Port);
++ IO_Port ctrl(ctrl0Port);
++ if(us>maxUS){
++   us=maxUS;
++ }
++
++ unsigned long temp = us * 1000;
++ temp/=timestep;
++
++ ctrl.outb(pcb.ctrlByte);
++ value.outb(temp&0xFF);
++ value.outb((temp>>8)&0xFF);
++
++ currIntervall=us;
++}
++
++unsigned short PIT::interval(){
++ return currIntervall;
++}
+diff -rupN -x .git ./src/machine/serial.cc ../aufg4/src/machine/serial.cc
+--- ./src/machine/serial.cc 2015-06-08 12:03:24.077788195 +0200
++++ ../aufg4/src/machine/serial.cc  2015-06-08 12:03:12.706726515 +0200
+@@ -1,4 +1,6 @@
+ #include "machine/serial.h"
++#include "locking/scopedLock.h"
++#include "object/lock.h"
+ 
+ Serial::Serial(): transmitPort(address+0),
+                   divisorLowPort(address+0),
+@@ -56,6 +58,7 @@ Serial::ControlByte Serial::control(){
+ }
+ 
+ unsigned int Serial::baudRate(){
++  ScopedLock sLock(lock);
+   union{
+     unsigned char buffer[2];
+     unsigned short divisor;
+@@ -71,6 +74,7 @@ unsigned int Serial::baudRate(){
+ }
+ 
+ unsigned int Serial::baudRate(unsigned int baudRate){
++  ScopedLock sLock(lock);
+   union{
+     unsigned char buffer[2];
+     unsigned short divisor;
+diff -rupN -x .git ./src/main.cc ../aufg4/src/main.cc
+--- ./src/main.cc 2015-06-08 12:03:24.077788195 +0200
++++ ../aufg4/src/main.cc  2015-06-08 12:14:47.512495349 +0200
+@@ -13,35 +13,73 @@
+ #include "device/interruptmanager.h"
+ #include "device/keyboard.h"
+ #include "device/cgastr.h"
++#include "device/watch.h"
+ #include "device/log.h"
++#include "thread/scheduler.h"
++#include "locking/interruptLock.h"
++#include "user/task1.h"
++#include "user/task2.h"
++#include "user/task3A.h"
++#include "user/task3B.h"
++#include "user/task3C.h"
++#include "user/task4.h"
+ 
+ /* MACROS */
+ 
+-/// \~german  festlegen, welche Aufgabenanwendung verwendet werden soll
+-/// \~english define which task is desired
+-#define USE_TASK           30
+-
+-//load the necessary header and define the class name of the task
+-#if USE_TASK == 10
+-  #include "user/task1.h"
+-#elif USE_TASK == 20
+-  #include "user/task2.h"
+-#elif USE_TASK == 30
+-  #include "user/task3A.h"
+-  #include "user/task3B.h"
+-  #include "user/task3C.h"
+-#endif
+-
++/// \~english define the task to execute
++#define USE_TASK 40
+ 
+ /* GLOBAL OBJECTS */
+ 
+-InterruptManager iManager;
+-CGA_Stream kout;
+-Keyboard keyboard;
++/** \brief global CPU object **/
+ CPU cpu;
++/** \brief global Lock to prevent interrupt based concurrancy **/
++InterruptLock lock;
++/** \brief Log for debug output over serial connection **/
+ Log log;
++/** \brief Scheduler of all Threads **/
++Scheduler scheduler;
++/** \brief Display output stream **/
++CGA_Stream kout;
++/** \brief Interrupt handling unit **/
++InterruptManager iManager;
++/** \brief Keyboard input facility **/
++Keyboard keyboard;
++/** \brief Periodic timer used for preemption of Threads **/
++Watch watch;
++
++#if USE_TASK == 10
++  /**\brief The first student task test application **/
++  Task1 task1;
++#elif USE_TASK == 20
++  /**\brief The second student task test application **/
++  Task2 task2;
++#elif USE_TASK == 30
++  /**\brief The third student task test application for part A**/
++  Task3A task3a;
++  /**\brief The third student task test application for Part B**/
++  Task3B task3b;
++#elif USE_TASK == 40
++  /**\brief The fourth student task test application **/
++  Task4 task4;
++#endif
+ 
+ /* METHODS  */
++/** \brief Wait for user input via keyboard to select sub task
++ *
++ *  \param minSubTask minimum task character
++ *  \param maxSubTask maximum task character
++ *
++ *  \return character of the choosen sub task
++ **/
++char getSubTask(char minSubTask, char maxSubTask){
++  kout << "Please choose subtask [" << minSubTask << ", " << maxSubTask << "]" << endl;
++  Key k;
++  do{
++      k=keyboard.get_key();
++  }while(!k.valid() || k.ascii()<minSubTask || k.ascii()>maxSubTask);
++  return k.ascii();
++}
+ 
+ extern "C" void kernel(uint32_t magic, const Multiboot_Info* info);
+ 
+@@ -55,20 +93,24 @@ extern "C" void kernel(uint32_t magic, c
+  * 
+  **/
+ void kernel(uint32_t magic, const Multiboot_Info* info){
+-  
++  kout.clear();
++  keyboard.plugin();
++  watch.windup(10000);
++
+ #if USE_TASK == 10
+-  Task1 task(magic, info);
+-  task.action();
++  task1.setup(magic, info);
++  scheduler.insert(task1);
+ #elif USE_TASK == 20
+-  Task2 task;
+-  task.action();
++  scheduler.insert(task2);
++  cpu.enable_int();
+ #elif USE_TASK == 30
+-  kout.clear();
+   kout << "Please choose subtask A-C" << endl;
+   Key k;
+   do 
+   {
+     k=keyboard.key_hit();
++  if(getSubTask('A', 'B')=='A'){
++    task3a.action();
+   }
+   while(!k.valid() || k.ascii() < 'A' || k.ascii() > 'C');
+ 
+@@ -86,6 +128,11 @@ void kernel(uint32_t magic, const Multib
+     kout<<"Task3 finished";
+     while(1);
+   }
++#elif USE_TASK == 40
++  if(getSubTask('A', 'B')=='A')
++    task4.enableCoop();
++  scheduler.insert(task4);
+ #endif
+-  while(1);
++
++  scheduler.start();
+ }
+diff -rupN -x .git ./src/thread/dispatch.cc ../aufg4/src/thread/dispatch.cc
+--- ./src/thread/dispatch.cc  1970-01-01 01:00:00.000000000 +0100
++++ ../aufg4/src/thread/dispatch.cc 2015-06-08 12:03:12.707726520 +0200
+@@ -0,0 +1,26 @@
++/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\
++ *                                 Technische Informatik II                                      *
++ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
++ *                                                                                               *
++ *                                         D I S P A T C H E R                                   *
++ *                                                                                               *
++\* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
++
++/* * * * * * * * * * * * * * * * * * * * * * * * *\
++#                   INCLUDES                      #
++\* * * * * * * * * * * * * * * * * * * * * * * * */
++
++#include "thread/dispatch.h"
++
++/* * * * * * * * * * * * * * * * * * * * * * * * *\
++#                   METHODS                       #
++\* * * * * * * * * * * * * * * * * * * * * * * * */
++
++void Dispatcher::start(Thread& first){
++  current=&first;
++  first.context.set();
++}
++
++void Dispatcher::dispatch(Thread& next){
++   // todo
++}
+diff -rupN -x .git ./src/thread/scheduler.cc ../aufg4/src/thread/scheduler.cc
+--- ./src/thread/scheduler.cc 1970-01-01 01:00:00.000000000 +0100
++++ ../aufg4/src/thread/scheduler.cc  2015-06-08 12:03:12.707726520 +0200
+@@ -0,0 +1,65 @@
++/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\
++ *                                 Technische Informatik II                                      *
++ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
++ *                                                                                               *
++ *                                         S C H E D U L E R                                     *
++ *                                                                                               *
++\* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
++
++/* * * * * * * * * * * * * * * * * * * * * * * * *\
++#                   INCLUDES                      #
++\* * * * * * * * * * * * * * * * * * * * * * * * */
++
++#include "thread/scheduler.h"
++#include "locking/scopedLock.h"
++#include "object/lock.h"
++#include "object/log.h"
++#include "object/cpu.h"
++
++
++/* * * * * * * * * * * * * * * * * * * * * * * * *\
++#                   METHODS                       #
++\* * * * * * * * * * * * * * * * * * * * * * * * */
++
++Scheduler::Scheduler() : started(false){}
++
++Scheduler::~Scheduler(){
++  started=false;
++}
++
++void Scheduler::start(){
++  // todo
++}
++
++void Scheduler::insert(Thread& that){
++  // todo
++}
++
++void Scheduler::next()
++{
++  Thread* next = static_cast<Thread*>(threads.pop_front());
++  if(!next){
++    log << "No more threads, finished!" << endl;
++    cpu.halt();
++  }
++  dispatch(*next);
++}
++
++void Scheduler::exit(){
++  // todo
++}
++
++bool Scheduler::kill(Thread& that){
++  // todo
++  // and also change the return value
++
++  return true;
++}
++
++void Scheduler::yield(){
++  // todo
++}
++
++void Scheduler::preempt(){
++  // todo
++}
+diff -rupN -x .git ./src/thread/thread.cc ../aufg4/src/thread/thread.cc
+--- ./src/thread/thread.cc  1970-01-01 01:00:00.000000000 +0100
++++ ../aufg4/src/thread/thread.cc 2015-06-08 12:03:12.707726520 +0200
+@@ -0,0 +1,38 @@
++/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\
++ *                                 Technische Informatik II                                      *
++ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
++ *                                                                                               *
++ *                                         T H R E A D                                           *
++ *                                                                                               *
++\* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
++
++/* * * * * * * * * * * * * * * * * * * * * * * * *\
++#                   INCLUDES                      #
++\* * * * * * * * * * * * * * * * * * * * * * * * */
++
++#include "thread/thread.h"
++#include "object/lock.h"
++#include "object/scheduler.h"
++#include "object/log.h"
++
++/* * * * * * * * * * * * * * * * * * * * * * * * *\
++#                   METHODS                       #
++\* * * * * * * * * * * * * * * * * * * * * * * * */
++
++void Thread::kickoff(Thread* thread){
++  // todo
++}
++
++Thread::Thread() : context(this){}
++
++Thread::~Thread(){
++    exit();
++}
++
++void Thread::yield(){
++  scheduler.yield();
++}
++
++void Thread::exit(){
++ scheduler.exit();
++}
+\ Kein Zeilenumbruch am Dateiende.
+diff -rupN -x .git ./src/user/analyse.cc ../aufg4/src/user/analyse.cc
+--- ./src/user/analyse.cc 2015-06-08 12:03:24.077788195 +0200
++++ ../aufg4/src/user/analyse.cc  2015-06-08 12:03:12.707726520 +0200
+@@ -28,10 +28,6 @@ void analyseProcedureStack(void** esp, c
+   kout << endl;
+   kout << function << "(" << esp << ") called" << endl;
+   
+-  /* * * * * * * * * * * * * * * * * * *\
+-  # Start ToDo-Bereich                  #
+-  \* * * * * * * * * * * * * * * * * * */
+-  //TODO Analyse-Ausgaben hier hin
+   int i, k;
+   bool bGoOn;
+   
+@@ -69,8 +65,4 @@ void analyseProcedureStack(void** esp, c
+   }
+   kout.flush();
+   kout << dec;
+-  
+-  /* * * * * * * * * * * * * * * * * * *\
+-  #  Ende ToDo-Bereich                  #
+-  \* * * * * * * * * * * * * * * * * * */
+ } 
+diff -rupN -x .git ./src/user/task1.cc ../aufg4/src/user/task1.cc
+--- ./src/user/task1.cc 2015-06-08 12:03:24.077788195 +0200
++++ ../aufg4/src/user/task1.cc  2015-06-08 12:03:12.707726520 +0200
+@@ -13,9 +13,9 @@
+ extern CGA_Stream kout;
+ extern Keyboard_Controller keyboard;
+ 
+-Task1::Task1(uint32_t magic, const ::Multiboot_Info* mbi)
+-            : Application(), magic(magic), mbi(reinterpret_cast<const Multiboot_Info*>(mbi)) {
+-  
++void Task1::setup(uint32_t magic, const ::Multiboot_Info* mbi){
++  this->magic=magic;
++  this->mbi=reinterpret_cast<const Multiboot_Info*>(mbi);
+ }
+ 
+ bool Task1::checkFlag(Flags flag){
+diff -rupN -x .git ./src/user/task4.cc ../aufg4/src/user/task4.cc
+--- ./src/user/task4.cc 1970-01-01 01:00:00.000000000 +0100
++++ ../aufg4/src/user/task4.cc  2015-06-08 12:03:12.707726520 +0200
+@@ -0,0 +1,82 @@
++#include "user/task4.h"
++#include "object/lock.h"
++#include "object/kout.h"
++#include "object/keyboard.h"
++#include "object/scheduler.h"
++#include "object/log.h"
++
++Task4::RotCursor::RotCursor(unsigned short x, unsigned short y) : i(0), x(x), y(y), coop(false){}
++
++void Task4::RotCursor::action(){
++ while(true)
++ {
++    lock.lock();
++    kout.flush();
++    kout.setpos(x, y);
++    switch(i++%4)
++    {
++        case(0): kout << '|';
++                  break;
++        case(1): kout << '/';
++                  break; 
++        case(2): kout << '-';
++                  break;
++        case(3): kout << '\\';
++                  break;
++    }
++    kout.flush();
++    lock.unlock();
++    if(coop){
++      yield();
++    }
++ }
++}
++
++Task4::Counter::Counter(unsigned short x, unsigned short y) : i(0), x(x), y(y), coop(false){}
++
++void Task4::Counter::action(){
++ while(true)
++ {
++    lock.lock();
++    kout.flush();
++    kout.setpos(x, y);
++    kout << "Counter: " << i++ << endl;
++    lock.unlock();
++    if(coop){
++      yield();
++    }
++ }
++}
++
++Task4::Task4() : rotCursor(rotCursorX, rotCursorY),
++                counter1(counter1X, counter1Y),
++                counter2(counter2X, counter2Y){
++  log << "Task4 created" << endl;
++}
++
++Task4::~Task4(){
++  log << "Finished Setup of Task4" << endl;
++}
++
++void Task4::action(){
++  kout.clear();
++ kout.setpos(31,1);
++ kout << "OOStuBs - Task 4" << endl << endl;
++  log << "Inserting RotatingCursor in Scheduler" << endl;
++  scheduler.insert(rotCursor);
++  log << "Inserting Counter 1 in Scheduler" << endl;
++ scheduler.insert(counter1);
++  log << "Inserting Counter 2 in Scheduler" << endl;
++ scheduler.insert(counter2);
++
++ // todo
++ // add never ending loop to verify first context is properly set
++ // remove it afterwards
++}
++
++void Task4::enableCoop(){
++  log << "Switching sub tasks to cooperative scheduling" << endl;
++  rotCursor.enableCoop();
++  counter1.enableCoop();
++  counter2.enableCoop();
++}

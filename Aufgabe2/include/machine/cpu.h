@@ -29,7 +29,7 @@ class CPU {
     
     /** \~german
      *  \~english
-     *  \brief globally dissable interrupts and return previous state
+     *  \brief globally disable interrupts and return previous state
      *  \return previous interrupt state
      **/
     inline bool disable_int () {
@@ -41,7 +41,7 @@ class CPU {
         "add $4, %%esp \n\t"
         :"=r"(temp)
       );
-      return temp;
+      return temp&(1<<9);
     }
     
     /** \~german

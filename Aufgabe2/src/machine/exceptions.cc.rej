@@ -1,0 +1,18 @@
+--- src/machine/exceptions.cc 2015-06-08 12:03:24.076788189 +0200
++++ aufg4/src/machine/exceptions.cc  2015-06-08 12:03:12.706726515 +0200
+@@ -11,6 +11,7 @@
+ #include "object/imanager.h"
+ #include "object/kout.h"
+ #include "object/cpu.h"
++#include "object/lock.h"
+ 
+ #include <stdint.h>
+ 
+@@ -110,5 +111,7 @@
+   if(slot < 32 && slot != 2) {
+     printException(slot, esp);
+   }
++  lock.enter();
+   iManager.handle(slot);
++  lock.leave();
+ }

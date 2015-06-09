@@ -12,6 +12,7 @@
 #include <device/interruptmanager.h>
 
 void InterruptManager::assign(int iNum, InterruptHandler& handler){
-    PIC::allow(PIC::Interrupts(iNum));	//bekommt 33 und erlaubt keyboard
-    InterruptStorage::assign(iNum, handler);
+	InterruptStorage::assign(iNum, handler);
+    allow(PIC::Interrupts(iNum));
+
 }

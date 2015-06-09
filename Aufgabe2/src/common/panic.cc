@@ -13,18 +13,20 @@
 #include "object/kout.h"
 #include "object/cpu.h"
 
+
 /* * * * * * * * * * * * * * * * * * * * * * * * *\
 #                    METHODS                      # 
 \* * * * * * * * * * * * * * * * * * * * * * * * */
-int current = -1;
+
 
 void Panic::trigger(){
-	//kout << current;
-	// kout << "PANIC";
+
+
 	kout.flush();
-    // cpu.halt();
+	//currentInterrupt();
+	cpu.halt();
 }
 
 void Panic::currentInterrupt(int iNum){
-	current = iNum;
+	kout<<iNum<< endl;
 }

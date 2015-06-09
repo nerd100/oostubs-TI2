@@ -25,8 +25,11 @@ InterruptHandler* interrupts[16];
 Panic panic;
 
 InterruptStorage::InterruptStorage(){
-	for(int i=0; i<16; i++) {  //nicht trigger von interruptstorake sondern von panic
+	for(int i=0; i<16; i++) {
 		interrupts[i] = &panic;
+
+
+
 	}
 }
 
@@ -36,5 +39,5 @@ void InterruptStorage::assign(int iNum, InterruptHandler& handler){ //iNUM 32-40
 }
 
 void InterruptStorage::handle(int iNum){
- 	interrupts[iNum-MIN_INTERRUPT_NUMBER] -> trigger();  //rufe trigger von panic auf mit keyboard interrupt im array position 1
+ 	interrupts[iNum-MIN_INTERRUPT_NUMBER] -> trigger();
 }

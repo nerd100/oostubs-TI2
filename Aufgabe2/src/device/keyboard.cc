@@ -20,7 +20,6 @@
 \* * * * * * * * * * * * * * * * * * * * * * * * */
 
 void Keyboard::plugin(){
-	// Keyboard keyboard;
 	iManager.assign(PIC::keyboard, *this);
 }
 
@@ -34,11 +33,15 @@ void Keyboard::trigger(){
 	 		kout.flush();
 	 		unsigned short x,y;
 	 		kout.getpos(x,y);
-	 		kout.setpos(13,13);
+	 		kout.setpos(KEYBOARD_X,KEYBOARD_Y);
 	 		kout << k;
 	 		kout.flush();
 	 		kout.setpos(x,y);
 	 	}
 	}
 	iManager.ack(PIC::keyboard);
+}
+
+Key& Keyboard::get_key() {
+ // return this->last_key;
 }
