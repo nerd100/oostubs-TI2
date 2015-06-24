@@ -1,0 +1,22 @@
+--- src/user/analyse.cc 2015-06-08 12:03:24.077788195 +0200
++++ aufg4/src/user/analyse.cc  2015-06-08 12:03:12.707726520 +0200
+@@ -28,10 +28,6 @@
+   kout << endl;
+   kout << function << "(" << esp << ") called" << endl;
+   
+-  /* * * * * * * * * * * * * * * * * * *\
+-  # Start ToDo-Bereich                  #
+-  \* * * * * * * * * * * * * * * * * * */
+-  //TODO Analyse-Ausgaben hier hin
+   int i, k;
+   bool bGoOn;
+   
+@@ -69,8 +65,4 @@
+   }
+   kout.flush();
+   kout << dec;
+-  
+-  /* * * * * * * * * * * * * * * * * * *\
+-  #  Ende ToDo-Bereich                  #
+-  \* * * * * * * * * * * * * * * * * * */
+ } 

@@ -1,0 +1,14 @@
+--- src/device/keyboard.cc  2015-06-08 12:03:24.076788189 +0200
++++ aufg4/src/device/keyboard.cc 2015-06-08 12:03:12.705726509 +0200
+@@ -25,8 +25,10 @@
+ void Keyboard::trigger(){
+   // fetch last key
+   Key k=key_hit();
+-
+   if(k.valid()){
++    // save last key
++    this->last_key = k;
++
+     // print key
+     kout.setpos(KEYBOARD_X, KEYBOARD_Y);
+     kout << k.ascii() << " (" << (unsigned int)k.scancode() << ")   ";

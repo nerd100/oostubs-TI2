@@ -1,0 +1,39 @@
+--- src/machine/keyctrl.cc  2015-06-08 12:03:24.077788195 +0200
++++ aufg4/src/machine/keyctrl.cc 2015-06-08 12:03:12.706726515 +0200
+@@ -8,7 +8,8 @@
+ 
+ /* INCLUDES */
+ #include "machine/keyctrl.h"
+-#include "locking/intlock.h"
++#include "object/lock.h"
++#include "locking/scopedLock.h"
+ 
+ /* GLOBALE VARIABLS */
+ 
+@@ -203,7 +204,7 @@
+ 
+ void Keyboard_Controller::reboot () {
+   int status;
+-  
++
+   // The BIOS has to be told that reset is real and no memory test.
+   *(unsigned short*) 0x472 = 0x1234;
+   
+@@ -236,7 +237,7 @@
+   
+   unsigned char status, reply;
+   
+-  IntLock lock;
++  ScopedLock scopedLock(lock);
+   
+   data_port.outb (cmd_set_speed);    // send command to keyboard
+   do { 
+@@ -256,7 +257,7 @@
+   
+   unsigned char status, reply;
+   
+-  IntLock lock;
++  ScopedLock scopedLock(lock);
+   
+   data_port.outb (cmd_set_led);             // send command to keyboard
+   do { 

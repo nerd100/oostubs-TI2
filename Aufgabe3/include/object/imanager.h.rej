@@ -1,0 +1,18 @@
+--- include/object/imanager.h 2015-06-08 12:03:24.072788168 +0200
++++ aufg4/include/object/imanager.h  2015-06-08 12:03:12.700726482 +0200
+@@ -2,8 +2,14 @@
+  *                                   Technische Informatik II                                    *
+  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+  *                                                                                               *
+- *                                        object/interruptmanager                                *
++ *                                 I M A N A G E R - O B J E C T                                 *
+  *                                                                                               *
+ \* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
++
++#ifndef __imanager_object_header__
++#define __imanager_object_header__
++
+ #include "device/interruptmanager.h"
+ extern InterruptManager iManager;
++
++#endif
