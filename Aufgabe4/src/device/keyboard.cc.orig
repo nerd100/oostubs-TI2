@@ -31,6 +31,8 @@ void Keyboard::trigger(){
 		if(k.ctrl() && k.alt() && k.scancode() == 0x10){  //0x10 Scancode für 'Q'
 			reboot();
 		} else{
+
+
 	 		kout.flush();
 	 		unsigned short x,y;
 	 		kout.getpos(x,y);
@@ -38,11 +40,16 @@ void Keyboard::trigger(){
 	 		kout << k;
 	 		kout.flush();
 	 		kout.setpos(x,y);
+
 	 	}
 	}
 	iManager.ack(PIC::keyboard);
 }
 
 Key& Keyboard::get_key() {
-  return this->last_key;
+
+  return this->last_key = key_hit();
 }
+
+//return this->last_key;
+

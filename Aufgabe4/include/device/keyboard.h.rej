@@ -1,35 +1,22 @@
---- include/device/keyboard.h 2015-06-08 12:03:24.071788162 +0200
-+++ aufg4/include/device/keyboard.h  2015-06-08 12:03:12.698726471 +0200
-@@ -31,6 +31,8 @@
+--- oostubs/include/device/keyboard.h	2015-06-23 14:00:43.292998223 +0200
++++ include/device/keyboard.h	2015-06-23 14:00:53.485049320 +0200
+@@ -33,9 +35,16 @@
   * for the keyboard.
   */
  class Keyboard : public Keyboard_Controller, public InterruptHandler  {
-+  protected:
-+    Key last_key;
-   public:    
+-  protected:
+-    Key last_key;
+-  public:    
++  private:
++    /** \brief one elemental key buffer **/
++    Key k;
++
++    /** \brief key buffer protecting semaphore **/
++    Semaphore sem;
++  public:
++    /** \brief Default constructor. **/
++    Keyboard();
++
      /** 
       * \~german
-@@ -65,6 +67,23 @@
-      *
-      */
-     virtual void trigger ();
-+
-+    /**
-+     * \~german
-+     * \brief gibt den zuletzt betätigten Key zurück.
-+     *
-+     * Tritt ein Interrupt für die Tastatur auf, wird der Tastendruck abgespeichert.
-+     * Mit dieser Funktion kann er abgefragt werden.
-+     *
-+     * @return Letzter betätigter Key
-+     *
-+     * \~english
-+     * \brief returns last key
-+     *
-+     * @return last Key
-+     *
-+     */
-+    Key& get_key();
- };
- 
- #endif
+      * \brief aktiviert den Interruptmechanismus für die Tastatur

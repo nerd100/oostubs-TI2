@@ -129,7 +129,7 @@ void kernel(uint32_t magic, const Multiboot_Info* info){
     while(1);
   }
 #elif USE_TASK == 40
-  if(1 == 2)
+  if(true)
     task4.enableCoop();
   scheduler.insert(task4);
 #endif

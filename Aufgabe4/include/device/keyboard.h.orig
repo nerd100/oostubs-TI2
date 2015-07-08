@@ -30,8 +30,12 @@
  * This class is a subclass of Gate and implements the interrupt routine used 
  * for the keyboard.
  */
+
 class Keyboard : public Keyboard_Controller, public InterruptHandler  {
 	int pic;
+	 private:
+    /** \brief one elemental key buffer **/
+    Key last_key;
 
   public:    
     /** 

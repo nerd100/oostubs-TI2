@@ -1,0 +1,1464 @@
+diff -Naur ../oostubs/doc/mainpage.dox ./doc/mainpage.dox
+--- ../oostubs/doc/mainpage.dox	2015-06-23 14:00:43.240997962 +0200
++++ ./doc/mainpage.dox	2015-06-23 14:00:53.432049053 +0200
+@@ -13,6 +13,7 @@
+  * \ref task2 \n
+  * \ref task3 \n
+  * \ref task4 \n
++ * \ref task5 \n
+  * 
+  * \section main_sec3 Entwicklungsumgebung
+  * Auf der folgenden Seite ist die Entwicklungsumgebung beschrieben. \n
+@@ -36,6 +37,7 @@
+  * \ref task2 \n
+  * \ref task3 \n
+  * \ref task4 \n
++ * \ref task5 \n
+  * 
+  * \section main_sec3 Development Environment
+  * The following side describe the environment. \n
+diff -Naur ../oostubs/doc/task5.dox ./doc/task5.dox
+--- ../oostubs/doc/task5.dox	1970-01-01 01:00:00.000000000 +0100
++++ ./doc/task5.dox	2015-06-23 14:00:53.484049315 +0200
+@@ -0,0 +1,51 @@
++/** \page task5 Aufgabe 5 - Blockierendes Warten 
++\tableofcontents
++ * 
++ * Die fünfte Aufgabe erweitert das OOstuBS um einen weiteren Thread-Zustand.
++ * Bisher wurden "bereit" und "aktiv" auf der Ebene des Schedulers umgesetzt, 
++ * nun kommt noch "blockiert" hinzu. Dazu wird eine weitere 
++ * Abstraktionsebene über den Klassen \ref Thread und \ref Scheduler.  
++ * eingefügt. Oberhalb der erstgenannten wird die Klasse \ref Customer eingefügt.
++ * Eine Instanz dieser Klasse kann als blockiert markiert und in einer separaten 
++ * Queue organisiert werden. Verantwortlich dafür ist der \ref Organizer, damit
++ * das short-term-scheduling des \ref Scheduler und \ref Dispatcher um ein 
++ * mid-term-scheduling erweitert. Dabei werden Prozesse, die synchronisiert werden
++ * sollen oder auf eine I/O Operation warten, nicht an den Scheduler zur 
++ * Ausführung übergeben und in seperaten Queues gespeichert. Die Entscheidung,
++ * ob ein Thread bereit werden kann (weil eine bestimmte Ressourcen bereitsteht)
++ * trifft ein ressourcenbezogener \ref Semaphore.
++ * 
++ * Die Idee dieses Mechanismus soll an der I/O Klasse \ref Keyboard verdeutlicht
++ * werden. Die Klasse erbt nunmehr, wie im Klassendiagramm ersichtlich, von der 
++ * Klasse \ref Semaphore. Eine entsprechende Instanz wird im Konstruktor mit der
++ * Zahl der verfügbaren Ressourcen (hier "0") initialisiert. Mit der Anforderung einer
++ * Leseoperation unter \ref Keyboard::getkey(), die abhängig von den Eingaben 
++ * des Nutzers beliebig lange dauern kann, wird also jeder Thread blockiert. Erfolgt
++ * eine Eingabe, wird der Thread wieder dem Scheduler übergeben und bekommt 
++ * im Falle der Ausführung das Ergebnis der getkey Funktion zugeordnet. Der Semaphore
++ * synchronisiert also die Tastatureingaben und zugehörigen Threads.
++ *
++ * Die Vorlage umfasst die Implementierung einer kleinen Shell, unter der die 
++ * 3 Anwendungen, Counter-1, Counter-2 und Rotating-Coursor in beliebiger 
++ * Kombination gestartet und gestoppt werden können. Mit help kann eine Hilfe
++ * zu diesen Möglichkeiten aufgerufen werden.
++ *
++ * Beachten Sie, dass das globale Objekt "scheduler" nunmehr eine Instanz der
++ * Klasse \ref Organizer ist!
++ *
++ * <ol> 
++ * <li>Erläutern Sie die Umsetzung des zuvor beschriebenen Algorithmus anhand 
++ * des Klassendiagramms der KLasse \ref Keyboard !</li>
++ * <li>Beschreiben Sie das Handling der eigentlichen Anwendungen. Analysieren 
++ * Sie dazu die Klassen \ref Job und \ref JobManager. Was ist der Unterschied
++ * zwischen einem \ref Customer und einem \ref Thread Objekt? Kann eine 
++ * Applikation ohne jemals "bereit" gewesen zu sein, als "blockiert" behandelt
++ * werden?</li>
++ * <li>Erklären Sie welche Änderungen in der Klasse \ref Scheduler eingeführt
++ * werden mussten, um das oben beschriebene Konzept umzusetzen.</li>
++ * <li>Implementieren Sie die Methoden der Klassen \ref Semaphore und 
++ * \ref Organizer .</li>
++ * </ol>
++ * 
++ **/
++
+diff -Naur ../oostubs/include/common/queue.h ./include/common/queue.h
+--- ../oostubs/include/common/queue.h	2015-06-23 14:00:43.292998223 +0200
++++ ./include/common/queue.h	2015-06-23 14:00:53.485049320 +0200
+@@ -26,6 +26,7 @@
+ 
+   public:
+     Queue();
++    virtual ~Queue(){}
+     void push_back(Element& e);
+     Element* pop_front();
+     Element* peek_front() const;
+diff -Naur ../oostubs/include/common/string.h ./include/common/string.h
+--- ../oostubs/include/common/string.h	1970-01-01 01:00:00.000000000 +0100
++++ ./include/common/string.h	2015-06-23 14:00:53.485049320 +0200
+@@ -0,0 +1,10 @@
++#ifndef __string_header__
++#define __string_header__
++
++#include <stddef.h>
++
++extern "C" int strcmp(const char* a, const char* b);
++extern "C" int strncmp(const char* a, const char* b, size_t n);
++
++
++#endif
+diff -Naur ../oostubs/include/config.h ./include/config.h
+--- ../oostubs/include/config.h	2015-06-23 14:00:43.292998223 +0200
++++ ./include/config.h	2015-06-23 14:00:53.485049320 +0200
+@@ -30,4 +30,10 @@
+ #define DEBUG_Y 0
+ #define KEYBOARD_X 10
+ #define KEYBOARD_Y 10
++
++#define CMD_X 0
++#define CMD_Y 18
++
++#define MAX_JOB_NUM 5
++
+ #endif
+diff -Naur ../oostubs/include/device/keyboard.h ./include/device/keyboard.h
+--- ../oostubs/include/device/keyboard.h	2015-06-23 14:00:43.292998223 +0200
++++ ./include/device/keyboard.h	2015-06-23 14:00:53.485049320 +0200
+@@ -14,6 +14,8 @@
+ \* * * * * * * * * * * * * * * * * * * * * * * * */
+ #include "machine/keyctrl.h"
+ #include "common/interrupthandler.h"
++#include "machine/key.h"
++#include "locking/semaphore.h"
+  
+ /* * * * * * * * * * * * * * * * * * * * * * * * *\
+ #                    CLASSES                      #
+@@ -31,9 +33,16 @@
+  * for the keyboard.
+  */
+ class Keyboard : public Keyboard_Controller, public InterruptHandler  {
+-  protected:
+-    Key last_key;
+-  public:    
++  private:
++    /** \brief one elemental key buffer **/
++    Key k;
++
++    /** \brief key buffer protecting semaphore **/
++    Semaphore sem;
++  public:
++    /** \brief Default constructor. **/
++    Keyboard();
++
+     /** 
+      * \~german
+      * \brief aktiviert den Interruptmechanismus für die Tastatur
+@@ -55,19 +64,15 @@
+      * \brief einen auftretenden Tastaturinterrupt behandeln
+      * 
+      * Tritt ein Interrupt für die Tastatur auf, so soll diese Funktion aufgerufen werden.
+-     *
+-     * In Aufgabe 2 soll die Funktion das eingegeben Zeichen an der festen
+-     * Position KEYBOARD_Y, KEYBOARD_X auf dem Bildschirm ausgegeben werden.
+-     *
++     * 
++     * In Aufgabe 2 soll die Funktion das eingegeben Zeichen an einer festen Position, z.B.
++     * x=4, y=10, auf dem Bildschirm ausgeben.
++     * 
+      * \~english
+      * \brief handle keyboard interrupt
+-     *
+-     * On each keyboard interrupt emitting a valid key, the key shall be
+-     * printed to the display at position KEYBOARD_Y, KEYBOARD_X
+-     *
+      */
+     virtual void trigger ();
+-
++    
+     /**
+      * \~german
+      * \brief gibt den zuletzt betätigten Key zurück.
+@@ -83,7 +88,7 @@
+      * @return last Key
+      *
+      */
+-    Key& get_key();
++    Key getkey();
+ };
+ 
+ #endif
+diff -Naur ../oostubs/include/locking/semaphore.h ./include/locking/semaphore.h
+--- ../oostubs/include/locking/semaphore.h	1970-01-01 01:00:00.000000000 +0100
++++ ./include/locking/semaphore.h	2015-06-23 14:00:53.485049320 +0200
+@@ -0,0 +1,56 @@
++/*---------------------------------------------------------------------------*
++ * Technical Computer Science II                                             *
++ *---------------------------------------------------------------------------*
++ *                                                                           *
++ *                         S E M A P H O R E                                 *
++ *                                                                           *
++ *---------------------------------------------------------------------------*/
++
++#ifndef __semaphore_header__
++#define __semaphore_header__
++
++/* * * * * * * * * * * * * * * * * * * * * * * * *\
++#                    INCLUDES                     #
++\* * * * * * * * * * * * * * * * * * * * * * * * */
++
++#include "thread/waitingroom.h"
++
++/* * * * * * * * * * * * * * * * * * * * * * * * *\
++#                    CLASSES                      #
++\* * * * * * * * * * * * * * * * * * * * * * * * */
++
++/** \brief Basic synchronisation object
++ *
++ *  This object can be used to synchronize multiple threads. It posses the method signal, which increases the internal
++ *  variable and possibly readys a blocked thread. The method wait causes the calling thread to block if the internal
++ *  value is zero. It inherits from Waitingroom to keep track of all the currently waiting threads.
++ *
++ **/
++class Semaphore : public Waitingroom
++{
++  private:
++    /** \brief Current value of semaphore **/
++    unsigned int value;
++	public:
++    /** \brief Default Constructor
++     *
++     *  It sets the internal variable to value.
++     *
++     *  \param value The initial value
++     **/
++		Semaphore(unsigned int value);
++    /** \brief Virtual Destructor to wake up al waiting customers **/
++		virtual ~Semaphore(){}
++    /** \brief Decrease value or block calling thread **/
++		void p();
++    /** \brief Increase value or wake up blocked thread **/
++		void v();
++    /** \brief Decrease value or block calling thread **/
++		void wait(){p();}
++    /** \brief Increase value or wake up blocked thread **/
++		void signal(){v();}
++    /** \brief Increase value or wake up blocked thread from interrupt context**/
++    void interrupt_signal();
++};
++
++#endif
+diff -Naur ../oostubs/include/machine/key.h ./include/machine/key.h
+--- ../oostubs/include/machine/key.h	2015-06-23 14:00:43.293998228 +0200
++++ ./include/machine/key.h	2015-06-23 14:00:53.486049325 +0200
+@@ -163,7 +163,8 @@
+     struct scan { 
+       enum {
+         f1    = 0x3d, 
+-        del   = 0x53, 
++        del   = 0x53,
++        back  = 0xe,
+         up    = 72, 
+         down  = 80, 
+         left  = 75, 
+diff -Naur ../oostubs/include/object/lock.h ./include/object/lock.h
+--- ../oostubs/include/object/lock.h	2015-06-23 14:00:43.293998228 +0200
++++ ./include/object/lock.h	2015-06-23 14:00:53.486049325 +0200
+@@ -6,8 +6,8 @@
+  *                                                                                               * 
+ \* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+ 
+-#ifndef __keyboard_object_header__
+-#define __keyboard_object_header__
++#ifndef __lock_object__header__
++#define __lock_object_header__
+ 
+ #include "locking/interruptLock.h"
+ extern InterruptLock lock;
+diff -Naur ../oostubs/include/object/scheduler.h ./include/object/scheduler.h
+--- ../oostubs/include/object/scheduler.h	2015-06-23 14:00:43.293998228 +0200
++++ ./include/object/scheduler.h	2015-06-23 14:00:53.486049325 +0200
+@@ -9,8 +9,8 @@
+ #ifndef __scheduler_object_header
+ #define __scheduler_object_header
+ 
+-#include "thread/scheduler.h"
++#include "thread/organizer.h"
+ 
+-extern Scheduler scheduler;
++extern Organizer scheduler;
+ 
+ #endif
+diff -Naur ../oostubs/include/thread/customer.h ./include/thread/customer.h
+--- ../oostubs/include/thread/customer.h	1970-01-01 01:00:00.000000000 +0100
++++ ./include/thread/customer.h	2015-06-23 14:00:53.486049325 +0200
+@@ -0,0 +1,74 @@
++/*---------------------------------------------------------------------------*
++ * Technical Computer Science II                                             *
++ *---------------------------------------------------------------------------*
++ *                                                                           *
++ *                         C U S T O M E R                                   *
++ *                                                                           *
++ *---------------------------------------------------------------------------*/
++#ifndef __customer_header__
++#define __customer_header__
++
++/* * * * * * * * * * * * * * * * * * * * * * * * *\
++#                    INCLUDES                     #
++\* * * * * * * * * * * * * * * * * * * * * * * * */
++
++#include "thread/thread.h"
++
++/* * * * * * * * * * * * * * * * * * * * * * * * *\
++#                    CLASSES                      #
++\* * * * * * * * * * * * * * * * * * * * * * * * */
++
++/** \brief Forward declaration of Waitingroom
++ *
++ *  This declaration allows the usage of Waitingroom objects without declaring or defining its content
++ **/
++class Waitingroom;
++
++
++/** \brief Extension of Thread able to wait in a Waitingroom
++ *
++ *  This class extends the basic thread pseudo-concurrency to allow waiting on conditions.
++ *  The condition responsible for blocking and reactivating the thread is defined by the implementation of the waitingroom.
++ *  \see Semaphore
++ *  \see Organizer
++ *
++ **/
++class Customer : public Thread
++{
++	private:
++    /** \brief The waitingroom this thread waits in
++     *
++     *  If NULL this thread is not waiting in any room.
++     **/
++		Waitingroom* room;
++
++	public:
++    /** \brief Default Constructor
++     *
++     *  Initializes the thread and declares it non-waiting
++     **/
++		Customer() : Thread(), room(0){}
++
++	private:
++    /** \brief Sets the room this thread is waiting in 
++     *
++     * Overloaded setter method, which may only be called by Organizer.
++     **/
++
++		void waiting_in(Waitingroom* room){
++			this->room=room;
++		}
++	
++	public:
++    /** \brief Gets the room this thread is waiting in 
++     *
++     * Overloaded getter method.
++     **/
++		Waitingroom* waiting_in() const{
++			return room;
++		}
++  /** \brief Friend declaration of Organizer to enable waitingroom changes. **/
++	friend class Organizer;
++};
++
++#endif
+diff -Naur ../oostubs/include/thread/organizer.h ./include/thread/organizer.h
+--- ../oostubs/include/thread/organizer.h	1970-01-01 01:00:00.000000000 +0100
++++ ./include/thread/organizer.h	2015-06-23 14:00:53.486049325 +0200
+@@ -0,0 +1,75 @@
++/*---------------------------------------------------------------------------*
++ * Technical Computer Science II                                             *
++ *---------------------------------------------------------------------------*
++ *                                                                           *
++ *                         O R G A N I Z E R                                 *
++ *                                                                           *
++ *---------------------------------------------------------------------------*/
++
++#ifndef __organizer_header__
++#define __organizer_header__
++
++/* * * * * * * * * * * * * * * * * * * * * * * * *\
++#                    INCLUDES                     #
++\* * * * * * * * * * * * * * * * * * * * * * * * */
++
++#include "thread/scheduler.h"
++#include "thread/customer.h"
++#include "thread/waitingroom.h"
++
++/* * * * * * * * * * * * * * * * * * * * * * * * *\
++#                    CLASSES                      #
++\* * * * * * * * * * * * * * * * * * * * * * * * */
++
++/** \brief Extension of Scheduler to support blocking of Threads
++ *
++ *  The organizer extends the basic round-robin scheduling through a blocking
++ *  semantics. Extended threads called customers are able to wait for certain
++ *  operations to finish or may wait if a ressource is unavailable. To support
++ *  this ressources which might be unavailable inherit from Waitingroom to
++ *  track and manage individual customers waiting fro their service. The
++ *  organizer handles the transitions of customer between the states "ready",
++ *  "running" and "blocked".
++ *
++ **/
++class Organizer : public Scheduler{
++  public:
++    /** \brief Block the active customer
++     *
++     * This method puts the currently active customer in the waiting queue of
++     * waitingroom. Afterwards the execution switches to the next ready
++     * thread.
++     *
++     *  \param waitingroom The room the customer will wait in
++     **/
++	  void block(Waitingroom& waitingroom);
++
++    /** \brief Wake up a customer waiting in a room
++     *
++     *  This method removes the customer from the waitingroom it is waiting in
++     *  and puts it in the ready queue.
++     *
++     *  \param customer The customer to wake up
++     **/
++	  void wakeup(Customer& customer);
++
++    /** \brief Kill a customer either waiting, running or ready
++     *
++     *  This method extends the functionality of Scheduler::kill through the
++     *  removal of currently waiting customers. Therefore the supplied customer
++     *  is checked if it is waiting in a room. If this is the case the customer
++     *  is removed from the waiting queue of this room. Otherwise
++     *  Scheduler::kill is called.
++     *
++     *  \param that The customer to kill
++     **/
++	  bool kill(Customer& that);
++
++    /** \brief Return the currently active customer
++     *
++     *  \return The currently active customer
++     **/
++    Customer* active() const;
++};
++
++#endif
+diff -Naur ../oostubs/include/thread/scheduler.h ./include/thread/scheduler.h
+--- ../oostubs/include/thread/scheduler.h	2015-06-23 14:00:43.293998228 +0200
++++ ./include/thread/scheduler.h	2015-06-23 14:00:53.486049325 +0200
+@@ -33,6 +33,19 @@
+   /** \brief flag set upon start of scheduler **/
+     bool started;
+ 
++  /**
++   * \~english
++   * \brief Idle Thread
++   *
++   * This thread is running when no other thread is available.
++   *
++   **/
++
++  class Idle : public Thread{
++    /** \brief Halts the CPU, waiting for interrupts **/
++    virtual void action();
++  } idle;
++
+ 
+ public:
+   /** \brief Default Constructor clearing started flag **/
+@@ -60,22 +73,33 @@
+    **/
+   void exit();
+ 
+-  /** \brief Remove the specified thread from the queue of threads, killing the execution of this thread.
+-   *
+-   * @param that reference of the thread to be killed.
+-   * @returns whether operation was successful
+-   */
+-  bool kill(Thread& that);
+-
+   /** \brief Yield to another ready thread **/
+   void yield();
+-private: // all private functions assume that interrupts are turned off
++
++  /** \brief Returns pointer to active thread **/
++  Thread* active() const;
++
++protected:
+   /** \brief helper function stop the execution of the current thread and switch to next one
+    *
+    *  This helper function unifies the scheduling of the next thread
+    **/
+   void next();
+ 
++  /** \brief Reactivates an unblocked thread by reinserting it to the thread queue.
++   *
++   * @param unblocked thread to be reactivated
++   **/
++  void reactivate(Thread& unblocked);
++
++  /** \brief Remove the specified thread from the queue of threads, killing the execution of this thread.
++   *
++   * @param that reference of the thread to be killed.
++   * @returns whether operation was successful
++   */
++  bool kill(Thread& that);
++
++private:
+   /** \brief helper function to yield unguarded to another thread
+    *
+    *  This helper function is used by watch to preempt the currently running thread.
+diff -Naur ../oostubs/include/thread/waitingroom.h ./include/thread/waitingroom.h
+--- ../oostubs/include/thread/waitingroom.h	1970-01-01 01:00:00.000000000 +0100
++++ ./include/thread/waitingroom.h	2015-06-23 14:00:53.486049325 +0200
+@@ -0,0 +1,44 @@
++/*---------------------------------------------------------------------------*
++ * Technical Computer Science II                                             *
++ *---------------------------------------------------------------------------*
++ *                                                                           *
++ *                         W A I T I N G R O O M                             *
++ *                                                                           *
++ *---------------------------------------------------------------------------*/
++
++#ifndef __waitingroom_header__
++#define __waitingroom_header__
++
++/* * * * * * * * * * * * * * * * * * * * * * * * *\
++#                    INCLUDES                     #
++\* * * * * * * * * * * * * * * * * * * * * * * * */
++
++#include "common/queue.h"
++
++/* * * * * * * * * * * * * * * * * * * * * * * * *\
++#                    CLASSES                      #
++\* * * * * * * * * * * * * * * * * * * * * * * * */
++
++/** \brief A waitingroom Customers can wait in.
++ *
++ *  The waitingroom consists of a queue the customers wait in until they can be
++ *  serviced.  On destruction of a waitingroom all waiting customers need to be
++ *  released. In this case the result of the operation the customers waited for 
++ *  depends on the implementation of the service the customers waited for.
++ *
++ *  \see Semaphore
++ **/
++class Waitingroom : public Queue
++{
++	public:
++    /** \brief Destructor reactivating waiting customers
++     *
++     *  The waiting customers need to be reactivated on destrcution of the
++     *  waitingroom since otherwise they will never be scheduled to run
++     *  again.
++     *
++     **/
++		virtual ~Waitingroom();
++};
++
++#endif
+diff -Naur ../oostubs/include/user/appl.h ./include/user/appl.h
+--- ../oostubs/include/user/appl.h	2015-06-23 14:00:43.293998228 +0200
++++ ./include/user/appl.h	2015-06-23 14:00:53.487049330 +0200
+@@ -9,14 +9,14 @@
+ #ifndef __application_include__
+ #define __application_include__
+ 
+-#include "thread/thread.h"
++#include "thread/customer.h"
+ 
+ /** \brief Basis of OOStuBs-Applications
+  *
+  * This class defines the only application used by oo-StuBS. Every application
+  * class is derived from this class.
+  */        
+-class Application : public Thread{
++class Application : public Customer{
+   public:
+     /** \brief Start the application
+      *
+diff -Naur ../oostubs/include/user/job.h ./include/user/job.h
+--- ../oostubs/include/user/job.h	1970-01-01 01:00:00.000000000 +0100
++++ ./include/user/job.h	2015-06-23 14:00:53.487049330 +0200
+@@ -0,0 +1,35 @@
++#ifndef __job_header__
++#define __job_header__
++
++#include <common/o_stream.h>
++
++struct Application;
++
++class Job{
++  public:
++  enum States{
++    stopped,
++    running,
++  };
++  
++  private:
++    States mState;
++    const char* mName;
++    Application* mApp;
++
++  public:
++    Job();
++    Job(Application& app, const char* name);
++    Job& operator=(const Job& j);
++
++    bool start();
++    bool stop();
++
++    States state() const;
++    const char* name() const;
++    Application& app() const;
++};
++
++O_Stream& operator<<(O_Stream& o, const Job& j);
++
++#endif
+diff -Naur ../oostubs/include/user/jobManager.h ./include/user/jobManager.h
+--- ../oostubs/include/user/jobManager.h	1970-01-01 01:00:00.000000000 +0100
++++ ./include/user/jobManager.h	2015-06-23 14:00:53.487049330 +0200
+@@ -0,0 +1,24 @@
++#ifndef __job_manager_header__
++#define __job_manager_header__
++
++#include <user/job.h>
++#include <config.h>
++
++class JobManager{
++  private:
++    Job mJobStorage[MAX_JOB_NUM];
++    unsigned int mNum;
++    int find(const char* name) const;
++  public:
++    JobManager();
++    bool registerJob(Application& app, const char* name);
++    bool unregisterJob(const char* name);
++    bool start(const char* name);
++    bool stop(const char* name);
++
++    friend O_Stream& operator<<(O_Stream& o, const JobManager& jm);
++};
++
++O_Stream& operator<<(O_Stream& o, const JobManager& jm);
++
++#endif
+diff -Naur ../oostubs/include/user/parser.h ./include/user/parser.h
+--- ../oostubs/include/user/parser.h	1970-01-01 01:00:00.000000000 +0100
++++ ./include/user/parser.h	2015-06-23 14:00:53.487049330 +0200
+@@ -0,0 +1,33 @@
++#ifndef __parser_header__
++#define __parser_header__
++
++#include <config.h>
++#include <common/o_stream.h>
++
++class Parser{
++  private:
++    char mBuffer[BUFFERSIZE];
++    unsigned int mNum;
++    bool mFinished;
++
++  public:
++    enum Commands{
++      unknown,
++      start,
++      kill,
++      list,
++      help
++    };
++    Parser();
++    void clear();
++    bool feed(char c);
++    void erase();
++    bool finished() const;
++    Commands result(const char** arg) const;
++    const char* commands() const;
++    unsigned int length() const;
++};
++
++O_Stream& operator<<(O_Stream& o, const Parser& p);
++
++#endif
+diff -Naur ../oostubs/include/user/task4.h ./include/user/task4.h
+--- ../oostubs/include/user/task4.h	2015-06-23 14:00:43.294998233 +0200
++++ ./include/user/task4.h	2015-06-23 14:00:53.487049330 +0200
+@@ -1,3 +1,6 @@
++#ifndef __task4_header__
++#define __task4_header__
++
+ #include "user/appl.h"
+ 
+ /** \brief Fourth test application
+@@ -6,7 +9,7 @@
+  * based applications.
+  **/
+ class Task4 : public Application{
+-	private:
++	protected:
+ 
+ enum Constants{
+ 	rotCursorX=79,
+@@ -105,3 +108,5 @@
+     /** \brief switch sub tasks to cooperative scheduling **/
+     void enableCoop();
+ };
++
++#endif
+diff -Naur ../oostubs/include/user/task5.h ./include/user/task5.h
+--- ../oostubs/include/user/task5.h	1970-01-01 01:00:00.000000000 +0100
++++ ./include/user/task5.h	2015-06-23 14:00:53.487049330 +0200
+@@ -0,0 +1,46 @@
++/*---------------------------------------------------------------------------*
++ * Technical Computer Science II                                             *
++ *---------------------------------------------------------------------------*
++ *                                                                           *
++ *                         T A S K 5                                         *
++ *                                                                           *
++ *---------------------------------------------------------------------------*/
++
++#ifndef __task5_header__
++#define __task5_header__
++
++/* * * * * * * * * * * * * * * * * * * * * * * * *\
++#                    INCLUDES                     #
++\* * * * * * * * * * * * * * * * * * * * * * * * */
++
++#include "user/task4.h"
++
++#include "user/jobManager.h"
++#include "user/parser.h"
++
++/* * * * * * * * * * * * * * * * * * * * * * * * *\
++#                    CLASSES                      #
++\* * * * * * * * * * * * * * * * * * * * * * * * */
++
++/** \brief Fifth test Application 
++ *
++ * This application shows the usage of blocking system calls to synchornize
++ * I/O-operations with individual threads.
++ *
++ **/
++class Task5 : public Task4{
++  private:
++    JobManager jobs;
++    Parser     cmdLine;
++  public:
++  /** \brief Default Constructor **/
++	  Task5();
++  /** \brief Functionality of the fifth test application
++   *
++   * Registers the 3 applications inherited from Task4: Counter1, Counter2 and RotatingCursor and starts the shell
++   * 
++   **/
++	  virtual void action();
++};
++
++#endif
+diff -Naur ../oostubs/src/common/queue.cc ./src/common/queue.cc
+--- ../oostubs/src/common/queue.cc	2015-06-23 14:00:43.295998238 +0200
++++ ./src/common/queue.cc	2015-06-23 14:00:53.488049335 +0200
+@@ -20,6 +20,7 @@
+     return NULL;
+   Element* temp=mHead;
+   mHead=temp->next;
++  temp->next=NULL;
+   return temp;
+ }
+ 
+@@ -37,6 +38,7 @@
+       }else{
+         mHead=curr->next;
+       }
++      curr->next=NULL;
+       return true;
+     }else{
+       preCurr=curr;
+diff -Naur ../oostubs/src/common/string.cc ./src/common/string.cc
+--- ../oostubs/src/common/string.cc	1970-01-01 01:00:00.000000000 +0100
++++ ./src/common/string.cc	2015-06-23 14:00:53.488049335 +0200
+@@ -0,0 +1,29 @@
++#include <common/string.h>
++
++int strcmp(const char* a, const char* b){
++  while(*a && *b){
++    if(*a<*b){
++      return -1;
++    }
++    if(*a>*b){
++      return 1;
++    }
++    a++;
++    b++;
++  }
++  return 0;
++}
++
++int strncmp(const char* a, const char* b, size_t n){
++  while(*a && *b && n--){
++    if(*a<*b){
++      return -1;
++    }
++    if(*a>*b){
++      return 1;
++    }
++    a++;
++    b++;
++  }
++  return 0;
++}
+diff -Naur ../oostubs/src/device/keyboard.cc ./src/device/keyboard.cc
+--- ../oostubs/src/device/keyboard.cc	2015-06-23 14:00:43.295998238 +0200
++++ ./src/device/keyboard.cc	2015-06-23 14:00:53.489049340 +0200
+@@ -11,36 +11,33 @@
+ \* * * * * * * * * * * * * * * * * * * * * * * * */
+ #include "device/keyboard.h"
+ #include "object/imanager.h"
+-#include "object/kout.h"
+-#include "config.h"
++#include "object/log.h"
+ 
+ /* * * * * * * * * * * * * * * * * * * * * * * * *\
+ #                    METHODS                      # 
+ \* * * * * * * * * * * * * * * * * * * * * * * * */
++Keyboard::Keyboard() : sem(0){
++
++}
+ 
+ void Keyboard::plugin(){
+-  iManager.assign((int)PIC::keyboard, *this);
++  iManager.assign(InterruptManager::keyboard, *this);
+ }
+ 
+ void Keyboard::trigger(){
+-  // fetch last key
+-  Key k=key_hit();
++  k = key_hit();
+   if(k.valid()){
+-    // save last key
+-    this->last_key = k;
+-
+-    // print key
+-    kout.setpos(KEYBOARD_X, KEYBOARD_Y);
+-    kout << k.ascii() << " (" << (unsigned int)k.scancode() << ")   ";
+-    kout.flush();
+-
+     // reboot on ctrl+alt+q
+     if(k.ctrl() && k.alt() && k.ascii() == 'q') {
+       reboot();
++    } else {
++      sem.interrupt_signal();
+     }
+-   }
++  }
+ }
+ 
+-Key& Keyboard::get_key() {
+-  return this->last_key;
++Key Keyboard::getkey(){
++    log << "Thread stored in Waitingroom " << endl;
++    sem.wait();
++    return k;
+ }
+diff -Naur ../oostubs/src/device/watch.cc ./src/device/watch.cc
+--- ../oostubs/src/device/watch.cc	2015-06-23 14:00:43.295998238 +0200
++++ ./src/device/watch.cc	2015-06-23 14:00:53.489049340 +0200
+@@ -25,7 +25,5 @@
+ }
+ 
+ void Watch::trigger(){
+-  // todo
+   scheduler.preempt();
+-//  log << "Watch::trigger()" << endl;
+ }
+diff -Naur ../oostubs/src/locking/semaphore.cc ./src/locking/semaphore.cc
+--- ../oostubs/src/locking/semaphore.cc	1970-01-01 01:00:00.000000000 +0100
++++ ./src/locking/semaphore.cc	2015-06-23 14:00:53.489049340 +0200
+@@ -0,0 +1,25 @@
++#include "locking/semaphore.h"
++#include "object/scheduler.h"
++#include "object/lock.h"
++#include "locking/scopedLock.h"
++
++Semaphore::Semaphore(unsigned int value) : value(value){
++}
++
++void Semaphore::p(){
++  ScopedLock scopedLock(lock);
++	if(value==0) {
++		scheduler.block(*this);
++	} else {
++		value--;
++	}
++}
++
++
++/** \todo implement **/
++void Semaphore::v(){
++}
++
++/** \todo implement **/
++void  Semaphore::interrupt_signal(){
++}
+diff -Naur ../oostubs/src/main.cc ./src/main.cc
+--- ../oostubs/src/main.cc	2015-06-23 14:00:43.296998243 +0200
++++ ./src/main.cc	2015-06-23 14:00:53.489049340 +0200
+@@ -15,18 +15,19 @@
+ #include "device/cgastr.h"
+ #include "device/watch.h"
+ #include "device/log.h"
+-#include "thread/scheduler.h"
++#include "thread/organizer.h"
+ #include "locking/interruptLock.h"
+ #include "user/task1.h"
+ #include "user/task2.h"
+ #include "user/task3A.h"
+ #include "user/task3B.h"
+ #include "user/task4.h"
++#include "user/task5.h"
+ 
+ /* MACROS */
+ 
+ /// \~english define the task to execute
+-#define USE_TASK 40
++#define USE_TASK 50
+ 
+ /* GLOBAL OBJECTS */
+ 
+@@ -37,7 +38,7 @@
+ /** \brief Log for debug output over serial connection **/
+ Log log;
+ /** \brief Scheduler of all Threads **/
+-Scheduler scheduler;
++Organizer scheduler;
+ /** \brief Display output stream **/
+ CGA_Stream kout;
+ /** \brief Interrupt handling unit **/
+@@ -61,6 +62,9 @@
+ #elif USE_TASK == 40
+   /**\brief The fourth student task test application **/
+   Task4 task4;
++#elif USE_TASK == 50
++  /**\brief The fifth student task test application **/
++  Task5 task5;
+ #endif
+ 
+ /* METHODS  */
+@@ -71,11 +75,11 @@
+  *
+  *  \return character of the choosen sub task
+  **/
+-char getSubTask(char minSubTask, char maxSubTask){
++bool getSubTask(char minSubTask, char maxSubTask){
+   kout << "Please choose subtask [" << minSubTask << ", " << maxSubTask << "]" << endl;
+   Key k;
+   do{
+-      k=keyboard.get_key();
++      k=keyboard.key_hit();
+   }while(!k.valid() || k.ascii()<minSubTask || k.ascii()>maxSubTask);
+   return k.ascii();
+ }
+@@ -92,10 +96,10 @@
+  * 
+  **/
+ void kernel(uint32_t magic, const Multiboot_Info* info){
+-  kout.clear();
++  
+   keyboard.plugin();
+   watch.windup(10000);
+-
++  
+ #if USE_TASK == 10
+   task1.setup(magic, info);
+   scheduler.insert(task1);
+@@ -104,15 +108,19 @@
+   cpu.enable_int();
+ #elif USE_TASK == 30
+   if(getSubTask('A', 'B')=='A'){
+-    task3a.action();
+-  }
+-  else{
+-    task3b.action();
++    scheduler.insert(task3a);
++    cpu.enable_int();
+   }
++  else
++    scheduler.insert(task3b);
+ #elif USE_TASK == 40
+   if(getSubTask('A', 'B')=='A')
+     task4.enableCoop();
+   scheduler.insert(task4);
++  cpu.enable_int();
++#elif USE_TASK == 50
++  scheduler.insert(task5);
++  cpu.enable_int();
+ #endif
+ 
+   scheduler.start();
+diff -Naur ../oostubs/src/thread/organizer.cc ./src/thread/organizer.cc
+--- ../oostubs/src/thread/organizer.cc	1970-01-01 01:00:00.000000000 +0100
++++ ./src/thread/organizer.cc	2015-06-23 14:00:53.489049340 +0200
+@@ -0,0 +1,28 @@
++#include "thread/organizer.h"
++#include "object/lock.h"
++#include "locking/scopedLock.h"
++#include "common/null.h"
++#include "object/log.h"
++
++void Organizer::block(Waitingroom& room){
++    room.push_back(*active());
++    active()->waiting_in(&room);
++    log << "Suspending Thread " << active() << endl;
++    next();
++}
++ 
++/** \todo implement **/
++void Organizer::wakeup(Customer& customer){
++  
++   log << "Reactivating Thread " << &customer << endl;
++}
++
++/** \todo implement **/
++bool Organizer::kill(Customer& that){
++   
++   return true;  //<-- Platzhalter
++}
++
++Customer* Organizer::active() const{
++    return static_cast<Customer*>(Scheduler::active());
++}
+diff -Naur ../oostubs/src/thread/scheduler.cc ./src/thread/scheduler.cc
+--- ../oostubs/src/thread/scheduler.cc	2015-06-23 14:00:43.296998243 +0200
++++ ./src/thread/scheduler.cc	2015-06-23 14:00:53.489049340 +0200
+@@ -12,6 +12,7 @@
+ 
+ #include "thread/scheduler.h"
+ #include "locking/scopedLock.h"
++#include "common/null.h"
+ #include "object/lock.h"
+ #include "object/log.h"
+ #include "object/cpu.h"
+@@ -29,77 +30,78 @@
+ 
+ void Scheduler::start(){
+   ScopedLock scopedLock(lock);
+-
++  started=true;
+   Thread* next = static_cast<Thread*>(threads.pop_front());
+-  if(!next){
+-    log << "No threads, finished!" << endl;
+-    cpu.halt();
++  if(next){
++    log << "System starts first Thread " << next << endl;
++    Dispatcher::start(*next);
++  }else{
++    log << "System starts idle Thread " << endl;
++    Dispatcher::start(idle);
+   }
+-
+-  started=true;
+-
+-  Dispatcher::start(*next);
+ }
+ 
+ void Scheduler::insert(Thread& that){
+   ScopedLock scopedLock(lock);
+   threads.push_back(that);
++  log << "Thread " << &that << " is ready" << endl;
+ }
+ 
++void Scheduler::next()
++{
++  Thread* next = static_cast<Thread*>(threads.pop_front());
++  if(!next){
++    log << "Thread " << &idle << " starting (idle Thread)" << endl;
++    next=&idle;
++  }
++  dispatch(*next);
++}
+ 
+ void Scheduler::exit(){
+   ScopedLock scopedLock(lock);
+-  Thread *current = active();
+-  if(!current) {
+-    log << "No thread to exit()!" << endl;
+-    cpu.halt();
+-  } else {
+-    // exit current thread by not re-scheduling current and advancing to next thread
+-    next();
+-  }
++  log << "Thread " << active() << " ended" << endl;
++  next();
+ }
+ 
+ bool Scheduler::kill(Thread& that){
+-  ScopedLock scopedLock(lock);
+-  if(active() == &that) {
+-    // prevent killing of active thread
+-    return false;
+-  } else {
+-    // returns whether was contained in threads or not
+-    return threads.remove(that);
++  if(&that==active()){
++    next();
++    return true;
+   }
++  // returns whether was contained in threads or not
++  return threads.remove(that);
+ }
+ 
+-// could be called inside lock, and outside of lock
+ void Scheduler::yield(){
+   ScopedLock scopedLock(lock);
+   preempt();
+ }
+ 
+-void Scheduler::next()
+-{
+-  // private function -> global interrupts are assumed to be turned off while in this function
+-  Thread* next = static_cast<Thread*>(threads.pop_front());
+-  if(!next){
+-    log << "No more threads, finished!" << endl;
+-    cpu.halt();
++void Scheduler::preempt(){
++  if(!started) {
++    return;
+   }
+-  dispatch(*next);
++  if(active()){
++    threads.push_back(*active());
++  }
++  next();
+ }
+ 
+-void Scheduler::preempt(){
+-  // private function -> global interrupts are assumed to be turned off while in this function
+-
+-  // retrieve active / current thread
+-  Thread *current = active();
++void Scheduler::reactivate(Thread& unblocked){
++  threads.push_back(unblocked);
++}
+ 
+-  // re-schedule current thread if there where
+-  if(current) {
+-    // re-schedule current thread
+-    threads.push_back(*current);
++Thread* Scheduler::active() const{
++  if(Dispatcher::active()==&idle){
++    return NULL;
++  }else{
++    return Dispatcher::active();
+   }
+-  if(!threads.empty()) {
+-    // and switch to next thread
+-    next();
++}
++
++void Scheduler::Idle::action(){
++  while(true){
++    cpu.halt();
++    yield();
+   }
+ }
+diff -Naur ../oostubs/src/thread/thread.cc ./src/thread/thread.cc
+--- ../oostubs/src/thread/thread.cc	2015-06-23 14:00:43.296998243 +0200
++++ ./src/thread/thread.cc	2015-06-23 14:00:53.489049340 +0200
+@@ -20,10 +20,11 @@
+ \* * * * * * * * * * * * * * * * * * * * * * * * */
+ 
+ void Thread::kickoff(Thread* thread){
++  log << "Thread " << thread << " starts execution" << endl;
+   lock.unlock();
+   thread->action();
+-  lock.lock();
+-  thread->exit();
++  while(true) 
++    thread->exit();
+ }
+ 
+ Thread::Thread() : context(this){}
+diff -Naur ../oostubs/src/thread/waitingroom.cc ./src/thread/waitingroom.cc
+--- ../oostubs/src/thread/waitingroom.cc	1970-01-01 01:00:00.000000000 +0100
++++ ./src/thread/waitingroom.cc	2015-06-23 14:00:53.489049340 +0200
+@@ -0,0 +1,11 @@
++#include "thread/waitingroom.h"
++
++#include "object/lock.h"
++#include "locking/scopedLock.h"
++#include "object/scheduler.h"
++
++Waitingroom::~Waitingroom(){
++  ScopedLock scopedLock(lock);
++	while(!empty())
++		scheduler.wakeup(*static_cast<Customer*>(pop_front()));
++}
+diff -Naur ../oostubs/src/user/job.cc ./src/user/job.cc
+--- ../oostubs/src/user/job.cc	1970-01-01 01:00:00.000000000 +0100
++++ ./src/user/job.cc	2015-06-23 14:00:53.489049340 +0200
+@@ -0,0 +1,59 @@
++#include <user/job.h>
++#include <user/appl.h>
++#include <common/null.h>
++#include <object/scheduler.h>
++
++Job::Job() : mState(stopped), mName(NULL), mApp(NULL){
++
++}
++
++Job::Job(Application& app, const char* name) : mState(stopped), mName(name), mApp(&app){
++  
++}
++
++Job& Job::operator=(const Job& j){
++  mApp = j.mApp;
++  mState = j.mState;
++  mName = j.mName;
++
++  return *this;
++}
++
++bool Job::start(){
++  if(mApp && mState==stopped){
++    scheduler.insert(*mApp);
++    mState=running;
++    return true;
++  }
++  return false;
++}
++
++bool Job::stop(){
++  if(mApp && mState==running){
++    scheduler.kill(*mApp);
++    mState=stopped;
++    return true;
++  }
++  return false;
++}
++
++Job::States Job::state() const{
++  return mState;
++}
++
++const char* Job::name() const{
++  return mName;
++}
++
++Application& Job::app() const{
++  return *mApp;
++}
++
++O_Stream& operator<<(O_Stream& o, const Job& j){
++  o << j.name() << ": ";
++  switch(j.state()){
++    case(Job::stopped): return o << "stopped";
++    case(Job::running): return o << "running";
++    default           : return o << "unknown";
++  }
++}
+diff -Naur ../oostubs/src/user/jobManager.cc ./src/user/jobManager.cc
+--- ../oostubs/src/user/jobManager.cc	1970-01-01 01:00:00.000000000 +0100
++++ ./src/user/jobManager.cc	2015-06-23 14:00:53.489049340 +0200
+@@ -0,0 +1,58 @@
++#include <user/jobManager.h>
++#include <common/string.h>
++#include <object/kout.h>
++
++JobManager::JobManager() : mNum(0){
++
++}
++
++bool JobManager::registerJob(Application& app, const char* name){
++    if(find(name)<0){
++      mJobStorage[mNum++]=Job(app, name);
++      return true;
++    }else{
++      return false;
++    }
++}
++
++bool JobManager::unregisterJob(const char* name){
++    int index = find(name);
++    if(index>=0){
++        mJobStorage[index]=mJobStorage[mNum--];
++    }
++    return index>=0;
++}
++
++int JobManager::find(const char* name) const{
++  for(unsigned int i=0;i<mNum;i++){
++    if(strcmp(name, mJobStorage[i].name())==0){
++      return i;
++    }
++  }
++  return -1;
++}
++
++bool JobManager::start(const char* name){
++  int index = find(name);
++  if(index>=0){
++    return mJobStorage[index].start();
++  }else{
++    return false;
++  }
++}
++
++bool JobManager::stop(const char* name){
++  int index = find(name);
++  if(index>=0){
++    return mJobStorage[index].stop();
++  }else{
++    return false;
++  }
++}
++
++O_Stream& operator<<(O_Stream& o, const JobManager& jm){
++  for(unsigned int i=0;i<jm.mNum;i++){
++    o << " " << jm.mJobStorage[i] << endl;
++  }
++  return o;
++}
+diff -Naur ../oostubs/src/user/parser.cc ./src/user/parser.cc
+--- ../oostubs/src/user/parser.cc	1970-01-01 01:00:00.000000000 +0100
++++ ./src/user/parser.cc	2015-06-23 14:00:53.489049340 +0200
+@@ -0,0 +1,74 @@
++#include <user/parser.h>
++#include <common/null.h>
++#include <object/kout.h>
++#include <common/string.h>
++
++Parser::Parser(): mNum(0), mFinished(false){}
++
++void Parser::clear(){
++  for(unsigned int i=0;i<BUFFERSIZE;i++){
++    mBuffer[i]='\0';
++  }
++  mNum=0;
++  mFinished=false;
++}
++
++bool Parser::feed(char c){
++  if(c=='\n'){
++    return mFinished=true;
++  }
++    
++  if(!mFinished && mNum<BUFFERSIZE){
++    mBuffer[mNum++]=c;
++    return true;
++  }else{
++    return false;
++  }
++}
++
++void Parser::erase(){
++  if(mNum){
++    mNum--;
++  }
++}
++
++bool Parser::finished() const{
++  return mFinished;
++}
++
++unsigned int Parser::length() const {
++  return mNum;
++}
++Parser::Commands Parser::result(const char** arg) const{
++    *arg=NULL;
++    if(!mNum){
++      return unknown;
++    }
++    if(strncmp(mBuffer, "start", mNum)==0){
++        *arg=mBuffer+6;
++        return start;
++    }
++
++    if(strncmp(mBuffer, "kill", mNum)==0){
++        *arg=mBuffer+5;
++        return kill;
++    }
++
++    if(strncmp(mBuffer, "list", mNum)==0){
++        return list;
++    }
++
++    if(strncmp(mBuffer, "help", mNum)==0){
++        return help;
++    }
++
++    return unknown;
++}
++
++O_Stream& operator<<(O_Stream& o, const Parser& p){
++     o << " start <app name> : starts the given application" << endl;
++     o << " kill <app name>  : stops the given application" << endl;
++     o << " list             : list all available applications" << endl;
++     o << " help             : output this help" << endl;
++     return o;
++}
+diff -Naur ../oostubs/src/user/task5.cc ./src/user/task5.cc
+--- ../oostubs/src/user/task5.cc	1970-01-01 01:00:00.000000000 +0100
++++ ./src/user/task5.cc	2015-06-23 14:00:53.490049345 +0200
+@@ -0,0 +1,70 @@
++#include "user/task5.h"
++
++#include "object/keyboard.h"
++#include "object/kout.h"
++#include "object/lock.h"
++#include "locking/scopedLock.h"
++
++Task5::Task5(){
++}
++
++void Task5::action(){
++  jobs.registerJob(counter1, "Counter-1");
++  jobs.registerJob(counter2, "Counter-2");
++  jobs.registerJob(rotCursor, "Rotating-Cursor");
++
++  while(true){
++    unsigned short x,y;
++    lock.lock();
++    kout.clear();
++	  kout.setpos(31,1);
++	  kout << "OOStuBs - Task 5" << endl;
++    kout.setpos(CMD_X, CMD_Y);
++    kout << "oostubs:$ ";
++    kout.flush();
++    kout.getpos(x,y);
++    cmdLine.clear();
++    lock.unlock();
++    while(!cmdLine.finished()){
++      Key k = keyboard.getkey();
++      
++      ScopedLock scopedLock(lock);
++
++      if(k.scancode() == Key::scan::back){
++        if(cmdLine.length()) {
++          x--;
++          kout.setpos(x,y);
++          kout << " ";
++          kout.flush();
++          cmdLine.erase();
++          kout.setpos(x,y);
++        }
++      } else {
++        kout.setpos(x,y);
++        kout << k.ascii();
++        kout.flush();
++        kout.getpos(x,y);
++        cmdLine.feed(k.ascii());
++      }
++    }
++    const char* arg;
++    switch(cmdLine.result(&arg)){
++      case(Parser::start):   jobs.start(arg);
++                             break;
++      case(Parser::kill):    jobs.stop(arg);
++                             break;
++      case(Parser::list):    {
++                               ScopedLock scopedLock(lock);
++                               kout << "jobs: " << endl << jobs;
++                             }
++                             break;
++      case(Parser::help):
++      case(Parser::unknown): {
++                               ScopedLock scopedLock(lock);
++                               kout << "commands: " << endl << cmdLine;
++                             }
++                             break;
++    };
++    keyboard.getkey();
++  }
++}

@@ -12,6 +12,7 @@
 
 #include "thread/scheduler.h"
 #include "locking/scopedLock.h"
+#include "common/null.h"
 #include "object/lock.h"
 #include "object/log.h"
 #include "object/cpu.h"

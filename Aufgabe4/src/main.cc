@@ -38,7 +38,7 @@ InterruptLock lock;
 /** \brief Log for debug output over serial connection **/
 Log log;
 /** \brief Scheduler of all Threads **/
-Scheduler scheduler;
+Organizer scheduler;
 /** \brief Display output stream **/
 CGA_Stream kout;
 /** \brief Interrupt handling unit **/
@@ -62,6 +62,9 @@ Watch watch;
 #elif USE_TASK == 40
   /**\brief The fourth student task test application **/
   Task4 task4;
+#elif USE_TASK == 50
+  /**\brief The fifth student task test application **/
+  Task5 task5;
 #endif
 
 /* METHODS  */
@@ -72,11 +75,11 @@ Watch watch;
  *
  *  \return character of the choosen sub task
  **/
-char getSubTask(char minSubTask, char maxSubTask){
+bool getSubTask(char minSubTask, char maxSubTask){
   kout << "Please choose subtask [" << minSubTask << ", " << maxSubTask << "]" << endl;
   Key k;
   do{
-      k=keyboard.get_key();
+      k=keyboard.key_hit();
   }while(!k.valid() || k.ascii()<minSubTask || k.ascii()>maxSubTask);
   return k.ascii();
 }
@@ -93,10 +96,10 @@ extern "C" void kernel(uint32_t magic, const Multiboot_Info* info);
  * 
  **/
 void kernel(uint32_t magic, const Multiboot_Info* info){
-  kout.clear();
+  
   keyboard.plugin();
   watch.windup(10000);
-
+  
 #if USE_TASK == 10
   task1.setup(magic, info);
   scheduler.insert(task1);

@@ -1,14 +1,52 @@
---- src/device/keyboard.cc  2015-06-08 12:03:24.076788189 +0200
-+++ aufg4/src/device/keyboard.cc 2015-06-08 12:03:12.705726509 +0200
-@@ -25,8 +25,10 @@
- void Keyboard::trigger(){
-   // fetch last key
-   Key k=key_hit();
--
-   if(k.valid()){
-+    // save last key
-+    this->last_key = k;
+--- oostubs/src/device/keyboard.cc	2015-06-23 14:00:43.295998238 +0200
++++ src/device/keyboard.cc	2015-06-23 14:00:53.489049340 +0200
+@@ -11,36 +11,33 @@
+ \* * * * * * * * * * * * * * * * * * * * * * * * */
+ #include "device/keyboard.h"
+ #include "object/imanager.h"
+-#include "object/kout.h"
+-#include "config.h"
++#include "object/log.h"
+ 
+ /* * * * * * * * * * * * * * * * * * * * * * * * *\
+ #                    METHODS                      # 
+ \* * * * * * * * * * * * * * * * * * * * * * * * */
++Keyboard::Keyboard() : sem(0){
 +
-     // print key
-     kout.setpos(KEYBOARD_X, KEYBOARD_Y);
-     kout << k.ascii() << " (" << (unsigned int)k.scancode() << ")   ";
++}
+ 
+ void Keyboard::plugin(){
+-  iManager.assign((int)PIC::keyboard, *this);
++  iManager.assign(InterruptManager::keyboard, *this);
+ }
+ 
+ void Keyboard::trigger(){
+-  // fetch last key
+-  Key k=key_hit();
++  k = key_hit();
+   if(k.valid()){
+-    // save last key
+-    this->last_key = k;
+-
+-    // print key
+-    kout.setpos(KEYBOARD_X, KEYBOARD_Y);
+-    kout << k.ascii() << " (" << (unsigned int)k.scancode() << ")   ";
+-    kout.flush();
+-
+     // reboot on ctrl+alt+q
+     if(k.ctrl() && k.alt() && k.ascii() == 'q') {
+       reboot();
++    } else {
++      sem.interrupt_signal();
+     }
+-   }
++  }
+ }
+ 
+-Key& Keyboard::get_key() {
+-  return this->last_key;
++Key Keyboard::getkey(){
++    log << "Thread stored in Waitingroom " << endl;
++    sem.wait();
++    return k;
+ }

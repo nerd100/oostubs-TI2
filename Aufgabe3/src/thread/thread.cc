@@ -22,7 +22,7 @@
 void Thread::kickoff(Thread* thread){
 	 log << "Thread " << thread << " starts execution" << endl;
 	  lock.unlock();
-	  thread->action();
+	  thread->yield();
 	  while(true)
 	    thread->exit();
   // todo

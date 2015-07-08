@@ -14,6 +14,8 @@
 \* * * * * * * * * * * * * * * * * * * * * * * * */
 #include "machine/keyctrl.h"
 #include "common/interrupthandler.h"
+#include "machine/key.h"
+#include "locking/semaphore.h"
  
 /* * * * * * * * * * * * * * * * * * * * * * * * *\
 #                    CLASSES                      #
@@ -59,19 +61,15 @@ class Keyboard : public Keyboard_Controller, public InterruptHandler  {
      * \brief einen auftretenden Tastaturinterrupt behandeln
      * 
      * Tritt ein Interrupt für die Tastatur auf, so soll diese Funktion aufgerufen werden.
-     *
-     * In Aufgabe 2 soll die Funktion das eingegeben Zeichen an der festen
-     * Position KEYBOARD_Y, KEYBOARD_X auf dem Bildschirm ausgegeben werden.
-     *
+     * 
+     * In Aufgabe 2 soll die Funktion das eingegeben Zeichen an einer festen Position, z.B.
+     * x=4, y=10, auf dem Bildschirm ausgeben.
+     * 
      * \~english
      * \brief handle keyboard interrupt
-     *
-     * On each keyboard interrupt emitting a valid key, the key shall be
-     * printed to the display at position KEYBOARD_Y, KEYBOARD_X
-     *
      */
     virtual void trigger ();
-
+    
     /**
      * \~german
      * \brief gibt den zuletzt betätigten Key zurück.
@@ -87,7 +85,7 @@ class Keyboard : public Keyboard_Controller, public InterruptHandler  {
      * @return last Key
      *
      */
-    Key& get_key();
+    Key getkey();
 };
 
 #endif

@@ -1,0 +1,125 @@
+--- oostubs/src/thread/scheduler.cc	2015-06-23 14:00:43.296998243 +0200
++++ src/thread/scheduler.cc	2015-06-23 14:00:53.489049340 +0200
+@@ -30,77 +31,78 @@
+ 
+ void Scheduler::start(){
+   ScopedLock scopedLock(lock);
+-
++  started=true;
+   Thread* next = static_cast<Thread*>(threads.pop_front());
+-  if(!next){
+-    log << "No threads, finished!" << endl;
+-    cpu.halt();
++  if(next){
++    log << "System starts first Thread " << next << endl;
++    Dispatcher::start(*next);
++  }else{
++    log << "System starts idle Thread " << endl;
++    Dispatcher::start(idle);
+   }
+-
+-  started=true;
+-
+-  Dispatcher::start(*next);
+ }
+ 
+ void Scheduler::insert(Thread& that){
+   ScopedLock scopedLock(lock);
+   threads.push_back(that);
++  log << "Thread " << &that << " is ready" << endl;
+ }
+ 
++void Scheduler::next()
++{
++  Thread* next = static_cast<Thread*>(threads.pop_front());
++  if(!next){
++    log << "Thread " << &idle << " starting (idle Thread)" << endl;
++    next=&idle;
++  }
++  dispatch(*next);
++}
+ 
+ void Scheduler::exit(){
+   ScopedLock scopedLock(lock);
+-  Thread *current = active();
+-  if(!current) {
+-    log << "No thread to exit()!" << endl;
+-    cpu.halt();
+-  } else {
+-    // exit current thread by not re-scheduling current and advancing to next thread
+-    next();
+-  }
++  log << "Thread " << active() << " ended" << endl;
++  next();
+ }
+ 
+ bool Scheduler::kill(Thread& that){
+-  ScopedLock scopedLock(lock);
+-  if(active() == &that) {
+-    // prevent killing of active thread
+-    return false;
+-  } else {
+-    // returns whether was contained in threads or not
+-    return threads.remove(that);
++  if(&that==active()){
++    next();
++    return true;
+   }
++  // returns whether was contained in threads or not
++  return threads.remove(that);
+ }
+ 
+-// could be called inside lock, and outside of lock
+ void Scheduler::yield(){
+   ScopedLock scopedLock(lock);
+   preempt();
+ }
+ 
+-void Scheduler::next()
+-{
+-  // private function -> global interrupts are assumed to be turned off while in this function
+-  Thread* next = static_cast<Thread*>(threads.pop_front());
+-  if(!next){
+-    log << "No more threads, finished!" << endl;
+-    cpu.halt();
++void Scheduler::preempt(){
++  if(!started) {
++    return;
+   }
+-  dispatch(*next);
++  if(active()){
++    threads.push_back(*active());
++  }
++  next();
+ }
+ 
+-void Scheduler::preempt(){
+-  // private function -> global interrupts are assumed to be turned off while in this function
+-
+-  // retrieve active / current thread
+-  Thread *current = active();
++void Scheduler::reactivate(Thread& unblocked){
++  threads.push_back(unblocked);
++}
+ 
+-  // re-schedule current thread if there where
+-  if(current) {
+-    // re-schedule current thread
+-    threads.push_back(*current);
++Thread* Scheduler::active() const{
++  if(Dispatcher::active()==&idle){
++    return NULL;
++  }else{
++    return Dispatcher::active();
+   }
+-  if(!threads.empty()) {
+-    // and switch to next thread
+-    next();
++}
++
++void Scheduler::Idle::action(){
++  while(true){
++    cpu.halt();
++    yield();
+   }
+ }

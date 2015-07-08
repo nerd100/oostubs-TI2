@@ -20,6 +20,7 @@ Queue::Element* Queue::pop_front(){
     return NULL;
   Element* temp=mHead;
   mHead=temp->next;
+  temp->next=NULL;
   return temp;
 }
 
@@ -37,6 +38,7 @@ bool Queue::remove(Queue::Element& e){
       }else{
         mHead=curr->next;
       }
+      curr->next=NULL;
       return true;
     }else{
       preCurr=curr;

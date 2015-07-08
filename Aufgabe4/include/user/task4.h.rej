@@ -1,0 +1,11 @@
+--- oostubs/include/user/task4.h	2015-06-23 14:00:43.294998233 +0200
++++ include/user/task4.h	2015-06-23 14:00:53.487049330 +0200
+@@ -9,7 +12,7 @@
+  * based applications.
+  **/
+ class Task4 : public Application{
+-	private:
++	protected:
+ 
+ enum Constants{
+ 	rotCursorX=79,

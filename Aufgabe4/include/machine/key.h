@@ -163,7 +163,8 @@ class Key {
     struct scan { 
       enum {
         f1    = 0x3d, 
-        del   = 0x53, 
+        del   = 0x53,
+        back  = 0xe,
         up    = 72, 
         down  = 80, 
         left  = 75, 

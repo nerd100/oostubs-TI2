@@ -1,0 +1,16 @@
+--- oostubs/src/thread/thread.cc	2015-06-23 14:00:43.296998243 +0200
++++ src/thread/thread.cc	2015-06-23 14:00:53.489049340 +0200
+@@ -20,10 +20,11 @@
+ \* * * * * * * * * * * * * * * * * * * * * * * * */
+ 
+ void Thread::kickoff(Thread* thread){
++  log << "Thread " << thread << " starts execution" << endl;
+   lock.unlock();
+   thread->action();
+-  lock.lock();
+-  thread->exit();
++  while(true) 
++    thread->exit();
+ }
+ 
+ Thread::Thread() : context(this){}

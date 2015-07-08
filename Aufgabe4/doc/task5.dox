@@ -1,0 +1,51 @@
+/** \page task5 Aufgabe 5 - Blockierendes Warten 
+\tableofcontents
+ * 
+ * Die fünfte Aufgabe erweitert das OOstuBS um einen weiteren Thread-Zustand.
+ * Bisher wurden "bereit" und "aktiv" auf der Ebene des Schedulers umgesetzt, 
+ * nun kommt noch "blockiert" hinzu. Dazu wird eine weitere 
+ * Abstraktionsebene über den Klassen \ref Thread und \ref Scheduler.  
+ * eingefügt. Oberhalb der erstgenannten wird die Klasse \ref Customer eingefügt.
+ * Eine Instanz dieser Klasse kann als blockiert markiert und in einer separaten 
+ * Queue organisiert werden. Verantwortlich dafür ist der \ref Organizer, damit
+ * das short-term-scheduling des \ref Scheduler und \ref Dispatcher um ein 
+ * mid-term-scheduling erweitert. Dabei werden Prozesse, die synchronisiert werden
+ * sollen oder auf eine I/O Operation warten, nicht an den Scheduler zur 
+ * Ausführung übergeben und in seperaten Queues gespeichert. Die Entscheidung,
+ * ob ein Thread bereit werden kann (weil eine bestimmte Ressourcen bereitsteht)
+ * trifft ein ressourcenbezogener \ref Semaphore.
+ * 
+ * Die Idee dieses Mechanismus soll an der I/O Klasse \ref Keyboard verdeutlicht
+ * werden. Die Klasse erbt nunmehr, wie im Klassendiagramm ersichtlich, von der 
+ * Klasse \ref Semaphore. Eine entsprechende Instanz wird im Konstruktor mit der
+ * Zahl der verfügbaren Ressourcen (hier "0") initialisiert. Mit der Anforderung einer
+ * Leseoperation unter \ref Keyboard::getkey(), die abhängig von den Eingaben 
+ * des Nutzers beliebig lange dauern kann, wird also jeder Thread blockiert. Erfolgt
+ * eine Eingabe, wird der Thread wieder dem Scheduler übergeben und bekommt 
+ * im Falle der Ausführung das Ergebnis der getkey Funktion zugeordnet. Der Semaphore
+ * synchronisiert also die Tastatureingaben und zugehörigen Threads.
+ *
+ * Die Vorlage umfasst die Implementierung einer kleinen Shell, unter der die 
+ * 3 Anwendungen, Counter-1, Counter-2 und Rotating-Coursor in beliebiger 
+ * Kombination gestartet und gestoppt werden können. Mit help kann eine Hilfe
+ * zu diesen Möglichkeiten aufgerufen werden.
+ *
+ * Beachten Sie, dass das globale Objekt "scheduler" nunmehr eine Instanz der
+ * Klasse \ref Organizer ist!
+ *
+ * <ol> 
+ * <li>Erläutern Sie die Umsetzung des zuvor beschriebenen Algorithmus anhand 
+ * des Klassendiagramms der KLasse \ref Keyboard !</li>
+ * <li>Beschreiben Sie das Handling der eigentlichen Anwendungen. Analysieren 
+ * Sie dazu die Klassen \ref Job und \ref JobManager. Was ist der Unterschied
+ * zwischen einem \ref Customer und einem \ref Thread Objekt? Kann eine 
+ * Applikation ohne jemals "bereit" gewesen zu sein, als "blockiert" behandelt
+ * werden?</li>
+ * <li>Erklären Sie welche Änderungen in der Klasse \ref Scheduler eingeführt
+ * werden mussten, um das oben beschriebene Konzept umzusetzen.</li>
+ * <li>Implementieren Sie die Methoden der Klassen \ref Semaphore und 
+ * \ref Organizer .</li>
+ * </ol>
+ * 
+ **/
+
