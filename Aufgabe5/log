@@ -1,0 +1,26 @@
+Task4 created
+Thread 0x130cb00 is ready
+System starts first Thread 0x130cb00
+Thread 0x130cb00 starts execution
+Thread stored in Waitingroom 
+Semaphore is going to wait
+Suspending Thread 0x130cb00
+Thread 0x130b654 starts execution
+Reactivating Thread 0x130cb00
+Semaphore received signal
+s
+Thread stored in Waitingroom 
+Semaphore is going to wait
+Suspending Thread 0x130cb00
+Reactivating Thread 0x130cb00
+Semaphore received signal
+Thread stored in Waitingroom 
+Semaphore is going to wait
+Suspending Thread 0x130cb00
+Reactivating Thread 0x130cb00
+Semaphore received signal
+
+
+Thread stored in Waitingroom 
+Semaphore is going to wait
+Suspending Thread 0x130cb00

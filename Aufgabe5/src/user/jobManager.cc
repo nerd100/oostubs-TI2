@@ -6,10 +6,10 @@ JobManager::JobManager() : mNum(0){
 
 }
 
-bool JobManager::registerJob(Application& app, const char* name){
-    if(find(name)<0){
-      mJobStorage[mNum++]=Job(app, name);
-      return true;
+bool JobManager::registerJob(Application& app, const char* name){//registriere die threads
+    if(find(name)<0){								//rufe find auf
+      mJobStorage[mNum++]=Job(app, name);			//ist job vorhanden gib false aus
+      return true;									//sonst true
     }else
       return false;
 }
@@ -21,8 +21,8 @@ bool JobManager::unregisterJob(const char* name){
     return index>=0;
 }
 
-int JobManager::find(const char* name) const{
-  for(unsigned int i=0;i<mNum;i++)
+int JobManager::find(const char* name) const{//testet mit strcmp(string compare), ob
+  for(unsigned int i=0;i<mNum;i++)			//der Job schon vorhanden ist
     if(strcmp(name, mJobStorage[i].name())==0)
       return i;
   return -1;

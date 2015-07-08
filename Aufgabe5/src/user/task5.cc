@@ -27,7 +27,7 @@ void Task5::action(){
     kout.getpos(x,y);
     cmdLine.clear();
     lock.unlock();
-    while(!cmdLine.finished()){
+    while(!cmdLine.finished()){ //falls enter geh raus
       Key k = keyboard.getkey();
       ScopedLock scopedLock(lock);
       if(k.scancode() == Key::scan::del){

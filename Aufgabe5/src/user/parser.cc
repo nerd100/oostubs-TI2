@@ -12,7 +12,7 @@ void Parser::clear(){
   mFinished=false;
 }
 
-bool Parser::feed(char c){
+bool Parser::feed(char c){//wurde enter gedrückt setze mfinished auf true
   if(c=='\n')
     return mFinished=true;
     
